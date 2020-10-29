@@ -1,0 +1,158 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+version = "0.1.0"
+android {
+    compileSdkVersion 29
+
+    defaultConfig {
+        minSdkVersion 16
+        targetSdkVersion 29
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
+    }
+}
+
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(dir: "libs", include: ["*.jar"])
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    compileOnly 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:4.3.6'
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    dependsOn 'assembleRelease'
+    source = android.sourceSets.main.java.srcDirs +
+            'build/generated/not_namespaced_r_class_sources/release/generateReleaseRFile/out/com/sensorsdata/analytics/android/sdk/R.java'
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+javadoc {
+    options {
+        encoding "UTF-8"
+        charSet 'UTF-8'
+    }
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+task makeJar(type: Copy) {
+    def jarName = 'SensorsABTesting-Android-SDK-Release-' + version + '.jar'
+    delete 'build/libs/' + jarName
+    from('build/intermediates/packaged-classes/release/')
+    into('build/libs/')
+    include('classes.jar')
+    rename('classes.jar', jarName)
+}
+
+makeJar.dependsOn(build)
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+def siteUrl = 'https://github.com/sensorsdata/abtesting-sdk-android'
+def gitUrl = 'https://github.com/sensorsdata/abtesting-sdk-android.git'
+
+group = "com.sensorsdata.abtesting"
+project.archivesBaseName = "SensorsABTesting"
+
+install {
+    repositories.mavenInstaller {
+        // generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                name 'The official Android SDK for Sensors A/B Testing.'
+                url siteUrl
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'dengshiwei'
+                        name 'ShiWeiDeng'
+                        email 'dengshiwei@sensorsdata.cn'
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+
+    def mavenUser = properties.getProperty("maven.user")
+    def mavenPassword = properties.getProperty("maven.password")
+
+    configurations = ['archives']
+    pkg {
+        repo = "maven"
+        name = "SensorsABTesting"
+        desc = 'The official Android SDK PRE for Sensors A/B Testing.'
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        labels = ['android']
+        publish = true
+        publicDownloadNumbers = true
+        version {
+            mavenCentralSync {
+                sync = true
+                //Optional (true by default). Determines whether to sync the version to Maven Central.
+                user = mavenUser //OSS user token
+                password = mavenPassword //OSS user password
+                close = '1'
+                //Optional property. By default the staging repository is closed and artifacts are released to Maven Central.
+                // You can optionally turn this behaviour off (by putting 0 as value) and release the version manually.
+            }
+        }
+
+    }
+}

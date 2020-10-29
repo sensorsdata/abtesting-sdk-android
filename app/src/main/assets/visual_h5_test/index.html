@@ -1,0 +1,457 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="shortcut icon" href="#" />
+    <meta charset='UTF-8'>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" >
+    <title>sdk demo ls </title>
+    <!-- <script>
+        var SensorsData_iOS_JS_Bridge = {
+            sensorsdata_app_server_url: 'https://jssdkdata.debugbox.sensorsdata.cn/sa?project=liangshuang&token=schemaLimited-1qsd1MDi',
+            sensorsdata_abtest_module:true
+        };
+        var index = 3000;
+        window.webkit={
+            messageHandlers:{
+                sensorsdataNativeTracker:{
+                    postMessage:function(data){
+                        var data = JSON.parse(data);
+                        
+                        if(data.callType  === 'abtest'){
+                            var id = data.data.message_id;
+                            console.log(data);
+                            dataobj = {
+
+                                    "status": "SUCCESS",                  // 查询结果标志（SUCCESS:进行试验；FAILED:不进入试验）
+                                    "error_type": "XXX_ERROR",            // 错误类型，请求结果为 FAILED 时返回
+                                    "error_msg":"xxxxxx",                 // 错误描述信息    
+
+                                    "results":
+                                    [
+                                        {
+                                            "abtest_experiment_id":"2",          // 试验 ID
+                                            "abtest_experiment_group_id":"app123",  // 试验内分组 ID
+
+                                            "is_control_group":false,     // 是否是对照组
+
+                                            "debug_mode": true,           // 是否调试模式，在该模式下只进行白名单的匹配，且不进行试验事件的上报
+                                            "config": {
+                                                "variables":"99999",        // 变量值均为字符串（一期 variables 为 "0"、"1"、"2"、"3" …）
+                                                "type":"INTEGER"           // 变量类型 INTEGER/STRING/BOOLEAN/JSON （一期 type 为 INTEGER）
+                                            }
+                                        },
+                                        {
+                                            "abtest_experiment_id":"1",          // 试验 ID
+                                            "abtest_experiment_group_id":"app123",  // 试验内分组 ID
+
+                                            "is_control_group":false,     // 是否是对照组
+
+                                            "debug_mode": true,           // 是否调试模式，在该模式下只进行白名单的匹配，且不进行试验事件的上报
+                                            "config": {
+                                                "variables":'{"app":"app"}',        // 变量值均为字符串（一期 variables 为 "0"、"1"、"2"、"3" …）
+                                                "type":"JSON"           // 变量类型 INTEGER/STRING/BOOLEAN/JSON （一期 type 为 INTEGER）
+                                            }
+                                        }
+                                    ]
+                            };
+                            var obj = {
+                                properties:{
+                                    app:'12787'
+                                },
+                                data:dataobj,
+                                message_id:id
+                            };
+                            var time = new Date().getSeconds();
+
+                            setTimeout(() => {
+                                 var n = index;
+                                 console.log(time,new Date().getSeconds());
+                                 window.sensorsdata_app_call_js('abtest',JSON.stringify(obj))
+
+                            }, 1000);
+                            index -= 1000;
+                        }
+
+                    }
+                }
+            }
+        }
+  
+  </script> -->
+    <script src="./abtest.js"></script>
+    <script charset='UTF-8' src="./sensorsdata.js"></script>
+
+    <!-- <script charset='UTF-8' src="https://cdn.jsdelivr.net/npm/sa-sdk-javascript@1.15.10/sensorsdata.min.js"></script> -->
+
+    <script>
+        var sensors = window['sensorsDataAnalytic201505'];
+        sensors.init({
+            server_url: 'http://10.120.152.3:8106/sa?project=default',
+            heatmap:{
+                scroll_notice_map:'not_collect'
+            },
+            show_log:true,
+            is_debug:{
+                apph5:true
+            },
+            app_js_bridge:{
+                white_list:['https://newsdktest.datasink.sensorsdata.cn/sa?project=chuqiangsheng&token=5a394d2405c147ca','http://10.120.12.0:8106/sa?project=default','https://jssdkdata.debugbox.sensorsdata.cn/sa?project=liangshuang&token=schemaLimited-1qsd1MDi']
+            }
+        });
+        sensors.quick('autoTrack');
+    </script>
+    
+    
+    <script>
+
+        var abtest = sensors.use('SensorsABTest',{
+            url:'http://abtesting-online.saas.debugbox.sensorsdata.cn/api/v2/abtest/online/results?project-key=0a551836f92dc3292be545c748f3f462e2d43bc9',
+        });
+
+
+
+
+
+        //冒烟用例
+        var bridge1 = new sensors.JSBridge({
+            type:'abtest123',         
+            app_call_js: function(data){
+                    console.log('js app_call_js 接收到iosdata',data);
+                     data = JSON.parse(data);
+                     if(data.message_id){
+                             this.double(data);
+                     }else{                                     
+                         //单向通道数据的处理逻辑            
+                     }
+        }});
+        var data = {
+               properties:{name:'jjchweng'},
+               timeout:3000
+        };
+        bridge1.jsCallApp(data);
+
+
+        var bridge2 = new sensors.JSBridge({
+            type:'123',         
+            app_call_js: function(data){
+                    console.log('js app_call_js 接收到iosdata',data);
+                     data = JSON.parse(data);
+                     if(data.message_id){
+                             this.double(data);
+                     }else{                                     
+                         //单向通道数据的处理逻辑            
+                     }
+        }});
+
+
+        var bridge3 = new sensors.JSBridge({
+            type:'123',         
+            app_call_js: function(data){
+                    console.log('js app_call_js 接收到iosdata',data);
+                     data = JSON.parse(data);
+                     if(data.message_id){
+                             this.double(data);
+                     }else{                                     
+                         //单向通道数据的处理逻辑            
+                     }
+        }});
+
+
+
+        // var abtest = sensors.use('SensorsABTest',{
+        //     url:'http://127.0.0.1:6676/api/v2/sab/results/test?project_key=123444',     
+        // });
+        // abtest.asyncFetchABTest({
+        //     experiment_id:'666',
+        //     default_value:443889,
+        //     value_type:'Number',
+        //     timeout_milliseconds:4000,
+        //     callback: function(value){
+        //        // 处理结果
+        //        console.log('asyncFetchABTest成功获取试验结果',value);
+        //     }
+        // });
+       
+    </script>
+
+    
+    <style>
+       
+    </style>
+    <script src="https://upcdn.b0.upaiyun.com/libs/jquery/jquery-2.0.2.min.js"></script>
+    <style>
+
+        span{
+            background: #92f2f5;
+            display: inline-block;
+            width: 45px;
+            text-align: center;
+        }
+        li{
+            background: #f2c9cc;
+        }
+        .module{
+            border: 1px solid rgb(212, 212, 212);
+            /* background: #f5f5f5; */
+            margin: 15px auto;
+            text-align: center;
+        }
+        .title{
+            color: rgb(160, 157, 157);
+            font-size: 16px;
+            font-weight: 2;
+            line-height: 30px;
+            height: 30px;
+            border: 1px  dashed;
+        }
+        .test .unit{
+            margin: 20px auto;
+            border: 1px solid rgb(228, 228, 223);
+            background: rgb(228, 228, 223);
+        }
+        .test div{
+            margin:20px auto
+        }
+        .test{
+            padding: 20px 30px;
+        }
+        .more{
+            border: 1px dashed;
+            height: 20px;
+            line-height: 20px;
+            background: #faf4cb;
+        }
+        .more strong{
+            background: yellowgreen;
+        }
+        .more em{
+            background: #7ff561;
+        }
+        .more a{
+            background: #92f2f5;
+        }
+        .more span{
+            background: #f3a2a8;
+        }
+        .btn{
+            display: inline-block;
+            text-align: center;
+            cursor: pointer;
+            background-color: -internal-light-dark(rgb(239, 239, 239), rgb(74, 74, 74));
+            padding: 1px 6px;
+            border-width: 2px;
+            border-style: outset;
+            border-color: -internal-light-dark(rgb(118, 118, 118), rgb(195, 195, 195));
+        }
+    </style>
+
+</head>
+<body>
+    
+    <div class="module">
+        <div class="title">分流API测试</div>
+        
+        <div class="test">
+            <div class="unit">
+                <div>
+                    <a>experiments_id:</a>
+                    <input type="text" id="idinput">
+                </div>
+                <div>
+                    <a>default_value:</a>
+                    <select id="dvselect">
+                        <option value ="dv_number">567</option>
+                        <option value ="dv_string">abtest</option>
+                        <option value="dv_object">{a:1}</option>
+                        <option value="dv_bool">false</option>
+                      </select>
+                </div>
+                <div>
+                    <a>value_type:</a>
+                    <select id="vtselect">
+                        <option value ="vt_number">Number</option>
+                        <option value ="vt_string">String</option>
+                        <option value="vt_object">Object</option>
+                        <option value="vt_bool">Boolean</option>
+                      </select>
+                </div>
+            </div>
+
+            <div class="unit">
+                <div id="asyncFetchbtn" class="btn">abtest.asyncFetchABTest</div>
+
+                <div id="asyncFetch" style="display: inline-block;width:80%;height:40px;color:rgb(87, 88, 85);font-weight: bolder;font-size: larger;border: 1px solid white;text-align: center;line-height: 40px;"></div>
+            </div>
+            <div class="unit">
+                <div id="fastFetchbtn" class="btn">abtest.fastFetchABTest</div>
+                <div id="fastFetch" style="display: inline-block;width:80%;height:40px;color:rgb(87, 88, 85);font-weight: bolder;font-size: larger;border: 1px solid white;text-align: center;line-height: 40px;"></div>
+            </div>
+            <div class="unit">
+                <div id="fetchCachebtn" class="btn">abtest.fetchCacheABTest</div>
+                <div id="fetchCache" style="display: inline-block;width:80%;height:40px;color:rgb(87, 88, 85);font-weight: bolder;font-size: larger;border: 1px solid white;text-align: center;line-height: 40px;"></div>
+            </div>
+            <div class="unit">
+                <div id="getLocalExpListbtn" class="btn">getLocalExpList</div>
+                <div id="getLocalExpList" style="display: inline-block;width:80%;height:40px;color:rgb(87, 88, 85);font-weight: bolder;font-size: larger;border: 1px solid white;text-align: center;line-height: 40px;"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        //分流 API 测试
+        function getpara(){
+            var id = '';
+            var dv = null;
+            var vt = null;
+            var val = idinput.value;
+            if(val.length){
+                id = val;
+            }
+            switch(dvselect.value){
+                case 'dv_number':
+                    dv = 567;
+                    break;
+                case 'dv_string':
+                    dv = 'abtest';
+                    break;
+                case 'dv_object':
+                    dv = {a:1};
+                    break;
+                case 'dv_bool':
+                    dv = false;
+                    break;
+                default:
+                    break;
+            };
+            switch(vtselect.value){
+                case 'vt_number':
+                    vt = 'Number';
+                    break;
+                case 'vt_string':
+                    vt = 'String';
+                    break;
+                case 'vt_object':
+                    vt = 'Object';
+                    break;
+                case 'vt_bool':
+                    vt = 'Boolean';
+                    break;
+                default:
+                    break;
+            };
+            return {
+                id:id,
+                dv:dv,
+                vt:vt
+            };
+            
+        };
+        $('#asyncFetchbtn').click(function(){
+            var para = getpara();
+            $('#asyncFetch').text('');
+            abtest.asyncFetchABTest({
+                experiment_id:para.id,
+                default_value:para.dv,
+                value_type:para.vt,
+                timeout_milliseconds:3000,
+                callback: function(value){
+                    // 处理结果
+                   console.log('asyncFetchABTest获取到试验结果',value);
+                   $('#asyncFetch').text('试验结果：'+ value);
+                   switch(value){
+                        case 0:
+                            //对照组的处理逻辑
+                            break;
+                        case 1:
+                            //试验组 1 的处理逻辑
+                            break;
+                        case 2:
+                            //试验组 2 的处理逻辑
+                            break;
+                        default:
+                            //其他情况的处理逻辑
+                            break;
+                   }
+                }
+            })
+        });
+        $('#fastFetchbtn').click(function(){
+            var para = getpara();
+            $('#fastFetch').text('');
+            abtest.fastFetchABTest({
+                experiment_id:para.id,
+                default_value:para.dv,
+                value_type:para.vt,
+                timeout_milliseconds:3000,
+                callback: function(value){
+                    // 处理结果
+                   console.log('fastFetchABTest获取到试验结果',value);
+                   $('#fastFetch').text('试验结果：'+ value);
+                }
+            })
+        });
+        $('#fetchCachebtn').click(function(){
+            var para = getpara();
+            $('#fetchCache').text('');
+            var a = abtest.fetchCacheABTest({
+                experiment_id:para.id,
+                default_value:para.dv,
+                value_type:para.vt
+            })
+            console.log('fetchCacheABTest获取到试验结果',a);
+            $('#fetchCache').text('试验结果：'+ a);
+        });
+        $('#getLocalExpListbtn').click(function(){
+            var list = abtest.getLocalList();
+            $('#getLocalExpList').text(list);
+        });
+    </script>
+    <div class="module">
+        <div class="title">全埋点测试</div>
+        <div class="test">
+            <button id="小脚裤+_6%$=*">button</button>
+        </div>
+     
+    </div>
+    <div class="module">
+        <div class="title">bridge测试</div>
+        <div class="test">
+            <button id="type1">123</button>
+            <button id="type2">123@test</button>
+        </div>
+    </div>
+    <script>
+        type1.onclick = function(){
+            var data = {
+               properties:{name:'jjchweng'},
+               timeout:3000
+            };
+            bridge2.jsCallApp(data);
+        }
+        type2.onclick = function(){
+            var data = {
+               properties:{name:'jjchweng'},
+               timeout:3000
+            };
+            bridge3.jsCallApp(data);
+        }
+    </script>
+    <div class="module">
+        <div class="title">查看打通状态</div>
+        <div class="test">
+            <button id="a1">主sdk打通状态</button>
+            <button id="a2">abtest打通状态</button>
+        </div>
+    </div>
+    <script>
+        a1.onclick = function(){
+            console.log('sensors.bridge.is_verify_success',sensors.bridge.is_verify_success);
+
+        }
+        a2.onclick = function(){
+            console.log('sensors.bridge.is_verify_success',sensors.bridge.is_verify_success);
+        }
+    </script>
+</body>
+</html>

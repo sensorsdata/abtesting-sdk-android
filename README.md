@@ -9,16 +9,17 @@
 ## SDK 简介
 
 SensorsAnalytics SDK 是国内第一家开源商用版用户行为采集 SDK，目前支持代码埋点、全埋点、App 点击图、可视化全埋点等。目前已累计有 1500 多家付费客户，2500+ 的 App 集成使用，作为 App 数据采集利器，致力于帮助客户挖掘更多的商业价值，为其精准运营和业务支撑提供了可靠的数据来源。其采集全面而灵活、性能良好，并一直保持稳定的迭代，经受住了时间和客户的考验。
+神策 A/B Testing SDK 是一款用于 A/B Testing 测试的 SDK。
 
 ## 基本要求
 Android 4.0 及以上。
 
 ## 贡献
 
-* 1.  在您的 GitHub 账户下 fork sa-sdk-android 开源项目；
-* 2.  根据您的需求在本地 clone 一份 sa-sdk-android 源码；
+* 1.  在您的 GitHub 账户下 fork abtesting-sdk-android 开源项目；
+* 2.  根据您的需求在本地 clone 一份 abtesting-sdk-android 源码；
 * 3.  您修改或者新增功能后，push 到您 fork 的远程分支；
-* 4.  创建 pull request，向 sa-sdk-android 官方开发分支提交合入请求；
+* 4.  创建 pull request，向 abtesting-sdk-android 官方开发分支提交合入请求；
 * 5.  神策 SDK 研发团队会及时 review 代码，测试通过后合入。
 
 ## 规划

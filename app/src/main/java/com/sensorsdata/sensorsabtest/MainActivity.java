@@ -17,6 +17,7 @@ import com.sensorsdata.abtest.SensorsABTest;
 import com.sensorsdata.abtest.core.SensorsABTestCacheManager;
 import com.sensorsdata.abtest.entity.Experiment;
 import com.sensorsdata.abtest.util.SPUtils;
+import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.util.SensorsDataUtils;
 
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.bt_asyncFetchABTestWithTimeout).setOnClickListener(this);
         findViewById(R.id.bt_fastFetchABTest).setOnClickListener(this);
         findViewById(R.id.bt_fastFetchABTestWithTimeout).setOnClickListener(this);
+        findViewById(R.id.bt_login).setOnClickListener(this);
         findViewById(R.id.bt_h5).setOnClickListener(this);
         findViewById(R.id.bt_distinct_id).setOnClickListener(this);
         mSpinner = findViewById(R.id.spinner_experiment_id);
@@ -123,16 +125,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
-
-
-
     }
 
     @Override
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.bt_fetchCacheABTest:
-                SensorsABTest.shareInstance().fetchCacheABTest(mExperimentId, mExperimentDefaultValue);
+                handleInvoke(InvokeEnum.FetchCacheABTest, -1);
                 break;
 
             case R.id.bt_asyncFetchABTest:
@@ -157,6 +156,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 final String uriString = "safb057fa8://abtest?sensors_abtest_url=http://10.120.41.143:8107/api/v2/sa/abtest/experiments/distinct_id?feature_code=xxx";
                 SensorsDataUtils.handleSchemeUrl(this, new Intent(Intent.ACTION_VIEW, Uri.parse(uriString)));
                 break;
+            case R.id.bt_login:
+                SensorsDataAPI.sharedInstance().login("login_test");
+                break;
         }
     }
 
@@ -177,6 +179,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         refreshLogView("fastFetchABTest: " + result);
                     }
                 });
+            } else if (invokeEnum == InvokeEnum.FetchCacheABTest) {
+                int result = (int) SensorsABTest.shareInstance().fetchCacheABTest(mExperimentId, mExperimentDefaultValue);
+                refreshLogView("FetchCacheABTest: " + result);
             }
         } else if (mExperimentDefaultValue instanceof String) {
             if (invokeEnum == InvokeEnum.AsyncFetchABTest) {
@@ -193,6 +198,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         refreshLogView("fastFetchABTest: " + result);
                     }
                 });
+            } else if (invokeEnum == InvokeEnum.FetchCacheABTest) {
+                String result = (String) SensorsABTest.shareInstance().fetchCacheABTest(mExperimentId, mExperimentDefaultValue);
+                refreshLogView("FetchCacheABTest: " + result);
             }
         } else if (mExperimentDefaultValue instanceof Boolean) {
             if (invokeEnum == InvokeEnum.AsyncFetchABTest) {
@@ -209,11 +217,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         refreshLogView("fastFetchABTest: " + result);
                     }
                 });
+            } else if (invokeEnum == InvokeEnum.FetchCacheABTest) {
+                boolean result = (Boolean) SensorsABTest.shareInstance().fetchCacheABTest(mExperimentId, mExperimentDefaultValue);
+                refreshLogView("FetchCacheABTest: " + result);
             }
         }
-
-
-
     }
 
     private void refreshLogView(String msg) {
@@ -226,7 +234,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     enum InvokeEnum {
         AsyncFetchABTest,
-        FastFetchABTest
+        FastFetchABTest,
+        FetchCacheABTest
     }
 
 }

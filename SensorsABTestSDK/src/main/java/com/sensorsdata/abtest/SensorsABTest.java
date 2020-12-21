@@ -121,10 +121,10 @@ public class SensorsABTest implements ISensorsABTestApi {
     }
 
     @Override
-    public <T> T fetchCacheABTest(String experimentId, T defaultValue) {
+    public <T> T fetchCacheABTest(String paramName, T defaultValue) {
         try {
-            SALog.i(TAG, "fetchCacheABTest params experimentId: " + experimentId + ",default value: " + defaultValue);
-            T t = SensorsABTestCacheManager.getInstance().getExperimentVariable(experimentId, defaultValue);
+            SALog.i(TAG, "fetchCacheABTest param name: " + paramName + ",default value: " + defaultValue);
+            T t = SensorsABTestCacheManager.getInstance().getExperimentVariableValue(paramName, defaultValue);
             return t != null ? t : defaultValue;
         } catch (Exception e) {
             SALog.printStackTrace(e);
@@ -133,48 +133,48 @@ public class SensorsABTest implements ISensorsABTestApi {
     }
 
     @Override
-    public <T> void asyncFetchABTest(String experimentId, T defaultValue, OnABTestReceivedData<T> callBack) {
+    public <T> void asyncFetchABTest(String paramName, T defaultValue, OnABTestReceivedData<T> callBack) {
         try {
-            asyncFetchABTest(experimentId, defaultValue, TIMEOUT_REQUEST, callBack);
+            asyncFetchABTest(paramName, defaultValue, TIMEOUT_REQUEST, callBack);
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }
     }
 
     @Override
-    public <T> void asyncFetchABTest(String experimentId, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+    public <T> void asyncFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
         try {
             if (timeoutMillSeconds > 0) {
-                SALog.i(TAG, "timeoutMillSeconds minimum value is 100");
-                timeoutMillSeconds = Math.max(100, timeoutMillSeconds);
+                SALog.i(TAG, "timeoutMillSeconds minimum value is 1000ms");
+                timeoutMillSeconds = Math.max(1000, timeoutMillSeconds);
             } else {
                 SALog.i(TAG, "timeoutMillSeconds params is not valid: <= 0 and set default value: " + TIMEOUT_REQUEST);
                 timeoutMillSeconds = TIMEOUT_REQUEST;
             }
-            SALog.i(TAG, "asyncFetchABTest request params experimentId: " + experimentId + ",default value: " + defaultValue + ",timeoutMillSeconds: " + timeoutMillSeconds);
-            new SensorsABTestApiRequestHelper<T>().requestExperimentById(experimentId, defaultValue, timeoutMillSeconds, callBack);
+            SALog.i(TAG, "asyncFetchABTest request param name: " + paramName + ",default value: " + defaultValue + ",timeoutMillSeconds: " + timeoutMillSeconds);
+            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(paramName, defaultValue, timeoutMillSeconds, callBack);
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }
     }
 
     @Override
-    public <T> void fastFetchABTest(String experimentId, T defaultValue, OnABTestReceivedData<T> callBack) {
+    public <T> void fastFetchABTest(String paramName, T defaultValue, OnABTestReceivedData<T> callBack) {
         try {
-            fastFetchABTest(experimentId, defaultValue, TIMEOUT_REQUEST, callBack);
+            fastFetchABTest(paramName, defaultValue, TIMEOUT_REQUEST, callBack);
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }
     }
 
     @Override
-    public <T> void fastFetchABTest(String experimentId, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+    public <T> void fastFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
         try {
-            T t = SensorsABTestCacheManager.getInstance().getExperimentVariable(experimentId, defaultValue);
+            T t = SensorsABTestCacheManager.getInstance().getExperimentVariableValue(paramName, defaultValue);
             if (t != null && callBack != null) {
                 callBack.onResult(t);
             } else {
-                asyncFetchABTest(experimentId, defaultValue, timeoutMillSeconds, callBack);
+                asyncFetchABTest(paramName, defaultValue, timeoutMillSeconds, callBack);
             }
         } catch (Exception e) {
             SALog.printStackTrace(e);

@@ -29,13 +29,17 @@ import com.sensorsdata.abtest.util.SPUtils;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
+import com.sensorsdata.analytics.android.sdk.listener.SAEventListener;
 import com.sensorsdata.analytics.android.sdk.listener.SAJSListener;
+
+import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
 import java.util.Map;
 
-public class SensorsABTestHelper implements SAJSListener, AppStateManager.AppStateChangedListener {
+public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppStateManager.AppStateChangedListener {
 
+    private static final String TAG = "SensorsABTestHelper";
     private Context mContext;
     private CountDownTimer mCountDownTimer;
 
@@ -44,6 +48,7 @@ public class SensorsABTestHelper implements SAJSListener, AppStateManager.AppSta
         SPUtils.getInstance().init(context);
         SensorsABTestCacheManager.getInstance().loadExperimentsFromDiskCache();
         SensorsDataAPI.sharedInstance().addSAJSListener(this);
+        SensorsDataAPI.sharedInstance().addEventListener(this);
         requestExperimentsAndUpdateCacheWithRetry();
         if (context instanceof Application) {
             Application application = (Application) context;
@@ -118,5 +123,33 @@ public class SensorsABTestHelper implements SAJSListener, AppStateManager.AppSta
         } finally {
             mCountDownTimer = null;
         }
+    }
+
+    @Override
+    public void trackEvent(JSONObject jsonObject) {
+    }
+
+    @Override
+    public void login() {
+        SALog.i(TAG, "login");
+        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
+    }
+
+    @Override
+    public void logout() {
+        SALog.i(TAG, "logout");
+        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
+    }
+
+    @Override
+    public void identify() {
+        SALog.i(TAG, "identify");
+        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
+    }
+
+    @Override
+    public void resetAnonymousId() {
+        SALog.i(TAG, "resetAnonymousId");
+        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
     }
 }

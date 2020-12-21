@@ -29,10 +29,10 @@ public enum SABErrorEnum {
     SDK_NULL_KEY_OF_SENSORS_AB_TEST_CONFIG_OPTIONS("0004", "A/B Testing SDK 初始化失败，请使用正确的 URL（必须包含 project-key)"),
 
     // SDK 接口传参、网络问题，错误码以 1 开头
-    ASYNC_REQUEST_NULL_EXPERIMENT_ID("1001", "The experimentId of async request is empty and return default value: %s"),
+    ASYNC_REQUEST_NULL_EXPERIMENT_PARAMETER_NAME("1001", "The experiment param name of async request is empty and return default value: %s"),
     ASYNC_REQUEST_NETWORK_UNAVAILABLE("1002", "Network is unavailable and return default value: %s"),
     ASYNC_REQUEST_TIMEOUT("1003", "AsyncRequest is timeout and return default value: %s"),
-    ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID("1004", "试验结果类型与代码期望类型不一致，experiment_id：%s，当前返回类型为：%s，代码期望类型为：%s"),
+    ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID("1004", "试验结果类型与代码期望类型不一致，试验参数名：%s，当前返回类型为：%s，代码期望类型为：%s"),
 
     // 服务端接口返回问题，错误码以 2 开头
     SERVER_UNKNOWN("2001", "服务端未知错误. code: %s, message: %s");

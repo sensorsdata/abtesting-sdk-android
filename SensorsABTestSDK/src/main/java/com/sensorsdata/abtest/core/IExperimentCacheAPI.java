@@ -52,12 +52,12 @@ interface IExperimentCacheAPI {
     void loadExperimentsFromDiskCache();
 
     /**
-     * 通过试验 id 获取缓存试验实体
+     * 通过试验参数名 获取缓存试验实体
      *
-     * @param experimentId 试验 id
+     * @param paramName 试验参数名
      * @param defaultValue 默认值
      * @param <T> 默认值类型
      * @return 试验实体
      */
-    <T> T getExperimentVariable(String experimentId, T defaultValue);
+    <T> T getExperimentVariableValue(String paramName, T defaultValue);
 }

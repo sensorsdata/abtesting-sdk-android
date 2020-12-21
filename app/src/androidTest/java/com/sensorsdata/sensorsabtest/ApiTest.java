@@ -35,44 +35,41 @@ public class ApiTest {
     private static final String sMockData = "{\n" +
             "\t\"status\": \"SUCCESS\",\n" +
             "\t\"error_type\": \"XXX_ERROR\",\n" +
-            "\t\"error_msg\": \"xxxxxx\",\n" +
+            "\t\"error\": \"xxxxxx\",\n" +
             "\t\"results\": [{\n" +
-            "\t\t\"experiment_id\": \"0\",\n" +
-            "\t\t\"experiment_group_id\": \"123\",\n" +
-            "\t\t\"is_control_group\": false,\n" +
-            "\t\t\"is_white_list\": true,\n" +
-            "\t\t\"config\": {\n" +
-            "\t\t\t\"variables\": \"0\",\n" +
-            "\t\t\t\"type\": \"INTEGER\"\n" +
+            "\t\t\t\"abtest_experiment_id\": \"100\",\n" +
+            "\t\t\t\"abtest_experiment_group_id\": \"123\",\n" +
+            "\t\t\t\"is_control_group\": false,\n" +
+            "\t\t\t\"is_white_list\": true,\n" +
+            "\t\t\t\"variables\": [{\n" +
+            "\t\t\t\t\"name\": \"textColor\",\n" +
+            "\t\t\t\t\"value\": \"1\",\n" +
+            "\t\t\t\t\"type\": \"INTEGER\"\n" +
+            "\t\t\t}]\n" +
+            "\t\t},\n" +
+            "\t\t{\n" +
+            "\t\t\t\"abtest_experiment_id\": \"101\",\n" +
+            "\t\t\t\"abtest_experiment_group_id\": \"123\",\n" +
+            "\t\t\t\"is_control_group\": false,\n" +
+            "\t\t\t\"is_white_list\": true,\n" +
+            "\t\t\t\"variables\": [{\n" +
+            "\t\t\t\t\t\"name\": \"textSize\",\n" +
+            "\t\t\t\t\t\"value\": \"1\",\n" +
+            "\t\t\t\t\t\"type\": \"INTEGER\"\n" +
+            "\t\t\t\t},\n" +
+            "\t\t\t\t{\n" +
+            "\t\t\t\t\t\"name\": \"textColor\",\n" +
+            "\t\t\t\t\t\"value\": \"1\",\n" +
+            "\t\t\t\t\t\"type\": \"INTEGER\"\n" +
+            "\t\t\t\t},\n" +
+            "\t\t\t\t{\n" +
+            "\t\t\t\t\t\"name\": \"color3\",\n" +
+            "\t\t\t\t\t\"value\": \"true\",\n" +
+            "\t\t\t\t\t\"type\": \"BOOLEAN\"\n" +
+            "\t\t\t\t}\n" +
+            "\t\t\t]\n" +
             "\t\t}\n" +
-            "\t}, {\n" +
-            "\t\t\"experiment_id\": \"1\",\n" +
-            "\t\t\"experiment_group_id\": \"123\",\n" +
-            "\t\t\"is_control_group\": false,\n" +
-            "\t\t\"is_white_list\": true,\n" +
-            "\t\t\"config\": {\n" +
-            "\t\t\t\"variables\": \"1\",\n" +
-            "\t\t\t\"type\": \"STRING\"\n" +
-            "\t\t}\n" +
-            "\t}, {\n" +
-            "\t\t\"experiment_id\": \"2\",\n" +
-            "\t\t\"experiment_group_id\": \"123\",\n" +
-            "\t\t\"is_control_group\": false,\n" +
-            "\t\t\"is_white_list\": true,\n" +
-            "\t\t\"config\": {\n" +
-            "\t\t\t\"variables\": \"true\",\n" +
-            "\t\t\t\"type\": \"BOOLEAN\"\n" +
-            "\t\t}\n" +
-            "\t}, {\n" +
-            "\t\t\"experiment_id\": \"3\",\n" +
-            "\t\t\"experiment_group_id\": \"123\",\n" +
-            "\t\t\"is_control_group\": false,\n" +
-            "\t\t\"is_white_list\": true,\n" +
-            "\t\t\"config\": {\n" +
-            "\t\t\t\"variables\": \"{\\\"a\\\":\\\"Hello\\\",\\\"b\\\":\\\"World\\\"}\",\n" +
-            "\t\t\t\"type\": \"JSON\"\n" +
-            "\t\t}\n" +
-            "\t}]\n" +
+            "\t]\n" +
             "}";
 
     @Test
@@ -84,20 +81,20 @@ public class ApiTest {
     @Test
     public void testFetchCacheABTest() {
         // normal
-        String value = SensorsABTest.shareInstance().fetchCacheABTest("1", "default");
-        assertEquals(value, "1");
+        String value = SensorsABTest.shareInstance().fetchCacheABTest("color2", "default");
+        assertEquals(value, "111");
 
         // type exception_int
-        int valueNumber = SensorsABTest.shareInstance().fetchCacheABTest("1", -22);
-        assertEquals(valueNumber, -22);
+        int valueNumber = SensorsABTest.shareInstance().fetchCacheABTest("color1", -22);
+        assertEquals(valueNumber, 1);
 
         // type exception_boolean
-        boolean valueBoolean = SensorsABTest.shareInstance().fetchCacheABTest("1", false);
-        assertEquals(valueBoolean, false);
+        boolean valueBoolean = SensorsABTest.shareInstance().fetchCacheABTest("color3", false);
+        assertEquals(valueBoolean, true);
 
         // type exception_json
         JSONObject jsonObject = new JSONObject();
-        JSONObject valueJsonObject = SensorsABTest.shareInstance().fetchCacheABTest("1", jsonObject);
+        JSONObject valueJsonObject = SensorsABTest.shareInstance().fetchCacheABTest("color1", jsonObject);
         assertEquals(jsonObject, valueJsonObject);
 
         // experimentId  ""
@@ -121,14 +118,14 @@ public class ApiTest {
     @Test
     public void testAsyncFetchABTest() {
         // normal
-        SensorsABTest.shareInstance().asyncFetchABTest("666", "default", new OnABTestReceivedData<String>() {
+        SensorsABTest.shareInstance().asyncFetchABTest("color1", "default", new OnABTestReceivedData<String>() {
             @Override
             public void onResult(String result) {
                 assertEquals(result, "default");
             }
         });
         // type exception_int
-        SensorsABTest.shareInstance().asyncFetchABTest("666", -1, new OnABTestReceivedData<Integer>() {
+        SensorsABTest.shareInstance().asyncFetchABTest("color1", -1, new OnABTestReceivedData<Integer>() {
             @Override
             public void onResult(Integer result) {
                 int value = result;
@@ -136,7 +133,7 @@ public class ApiTest {
             }
         });
         // type exception_boolean
-        SensorsABTest.shareInstance().asyncFetchABTest("666", true, new OnABTestReceivedData<Boolean>() {
+        SensorsABTest.shareInstance().asyncFetchABTest("color1", true, new OnABTestReceivedData<Boolean>() {
             @Override
             public void onResult(Boolean result) {
                 assertEquals(true, result);
@@ -144,7 +141,7 @@ public class ApiTest {
         });
         // type exception_jsonObject
         final JSONObject object = new JSONObject();
-        SensorsABTest.shareInstance().asyncFetchABTest("666", object, new OnABTestReceivedData<JSONObject>() {
+        SensorsABTest.shareInstance().asyncFetchABTest("color1", object, new OnABTestReceivedData<JSONObject>() {
             @Override
             public void onResult(JSONObject jsonObject) {
                 assertEquals(object, jsonObject);
@@ -172,7 +169,7 @@ public class ApiTest {
             }
         });
 
-        SensorsABTest.shareInstance().asyncFetchABTest("666", null, new OnABTestReceivedData<Integer>() {
+        SensorsABTest.shareInstance().asyncFetchABTest("color1", null, new OnABTestReceivedData<Integer>() {
             @Override
             public void onResult(Integer result) {
                 int value = result;
@@ -196,7 +193,7 @@ public class ApiTest {
     @Test
     public void testAsyncFetchABTestWithTimeOut() {
         // normal
-        SensorsABTest.shareInstance().asyncFetchABTest("666", -1, 5, new OnABTestReceivedData<Integer>() {
+        SensorsABTest.shareInstance().asyncFetchABTest("color1", -1, 5, new OnABTestReceivedData<Integer>() {
             @Override
             public void onResult(Integer result) {
                 SALog.i("testAsyncFetchABTestWithTimeOut", " value: " + result);
@@ -207,14 +204,14 @@ public class ApiTest {
     @Test
     public void testFastFetchABTest() {
         // normal
-        SensorsABTest.shareInstance().fastFetchABTest("1", "default", new OnABTestReceivedData<String>() {
+        SensorsABTest.shareInstance().fastFetchABTest("color1", "default", new OnABTestReceivedData<String>() {
             @Override
             public void onResult(String result) {
                 assertEquals(result, "1");
             }
         });
         // type exception_int
-        SensorsABTest.shareInstance().fastFetchABTest("1", -1, new OnABTestReceivedData<Integer>() {
+        SensorsABTest.shareInstance().fastFetchABTest("color1", -1, new OnABTestReceivedData<Integer>() {
             @Override
             public void onResult(Integer result) {
                 int value = result;
@@ -222,7 +219,7 @@ public class ApiTest {
             }
         });
         // type exception_boolean
-        SensorsABTest.shareInstance().fastFetchABTest("1", true, new OnABTestReceivedData<Boolean>() {
+        SensorsABTest.shareInstance().fastFetchABTest("color1", true, new OnABTestReceivedData<Boolean>() {
             @Override
             public void onResult(Boolean result) {
                 assertEquals(true, result);
@@ -230,7 +227,7 @@ public class ApiTest {
         });
         // type exception_jsonObject
         final JSONObject object = new JSONObject();
-        SensorsABTest.shareInstance().fastFetchABTest("1", object, new OnABTestReceivedData<JSONObject>() {
+        SensorsABTest.shareInstance().fastFetchABTest("color1", object, new OnABTestReceivedData<JSONObject>() {
             @Override
             public void onResult(JSONObject jsonObject) {
                 assertEquals(object, jsonObject);
@@ -258,7 +255,7 @@ public class ApiTest {
             }
         });
 
-        SensorsABTest.shareInstance().fastFetchABTest("1", null, new OnABTestReceivedData<String>() {
+        SensorsABTest.shareInstance().fastFetchABTest("color1", null, new OnABTestReceivedData<String>() {
             @Override
             public void onResult(String result) {
                 assertEquals(result, "1");
@@ -292,7 +289,17 @@ public class ApiTest {
                 .enableVisualizedAutoTrackConfirmDialog(true);
         SensorsDataAPI.startWithConfigOptions(appContext, configOptions);
 
-        SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://abtesting-online.saas.debugbox.sensorsdata.cn/api/v2/abtest/online/results?project-key=test");
+        SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://abtesting.saas.debugbox.sensorsdata.cn/api/v100/abtest/online/results?project-key=0a551836f92dc3292be545c748f3f462e2d43bc9");
         SensorsABTest.startWithConfigOptions(appContext, abTestConfigOptions);
+
+        try {
+            JSONObject jsonObject = new JSONObject(sMockData);
+            JSONArray jsonArray = jsonObject.optJSONArray("results");
+            SensorsABTestCacheManager.getInstance().getExperimentsFromMemoryCache(jsonArray.toString());
+            SensorsABTestCacheManager.getInstance().saveExperiments2DiskCache(jsonArray.toString());
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
     }
 }

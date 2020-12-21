@@ -17,6 +17,9 @@
 
 package com.sensorsdata.abtest.entity;
 
+import android.text.TextUtils;
+
+import com.sensorsdata.abtest.BuildConfig;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.util.JSONUtils;
@@ -30,12 +33,19 @@ public class ExperimentRequest {
     public JSONObject createRequestBody() {
         JSONObject jsonObject = new JSONObject();
         try {
-            jsonObject.put("login_id", SensorsDataAPI.sharedInstance().getLoginId());
+            String loginId = SensorsDataAPI.sharedInstance().getLoginId();
+            if (!TextUtils.isEmpty(loginId)) {
+                jsonObject.put("login_id", loginId);
+            }
             jsonObject.put("anonymous_id", SensorsDataAPI.sharedInstance().getAnonymousId());
             jsonObject.put("platform", "Android");
             jsonObject.put("properties", getPresetProperties());
+            jsonObject.put("abtest_lib_version", BuildConfig.SDK_VERSION);
+
             SALog.i(TAG, "getRequestParams | request:\n" + JSONUtils.formatJson(jsonObject.toString()));
         } catch (JSONException e) {
+            SALog.printStackTrace(e);
+        } catch (Exception e) {
             SALog.printStackTrace(e);
         }
         return jsonObject;

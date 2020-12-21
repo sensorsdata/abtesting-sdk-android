@@ -22,7 +22,6 @@ import android.content.Intent;
 
 import com.sensorsdata.abtest.core.SensorsABTestApiRequestHelper;
 import com.sensorsdata.abtest.util.AlarmManagerUtils;
-import com.sensorsdata.analytics.android.sdk.AppStateManager;
 import com.sensorsdata.analytics.android.sdk.SALog;
 
 public class GlobalLoopService extends IntentService {
@@ -40,9 +39,7 @@ public class GlobalLoopService extends IntentService {
     @Override
     protected void onHandleIntent(Intent intent) {
         SALog.i(TAG, "GlobalLoopService receive");
-        if (!AppStateManager.getInstance().isInBackground()) {
-            new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
-        }
+        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
         AlarmManagerUtils.getInstance(this).setUpAlarmOnReceiver();
     }
 }

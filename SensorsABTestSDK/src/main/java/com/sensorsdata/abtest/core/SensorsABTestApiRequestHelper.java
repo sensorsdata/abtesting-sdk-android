@@ -49,12 +49,18 @@ public class SensorsABTestApiRequestHelper<T> {
     private static final String TAG = "SAB.SensorsABTestApiRequestHelper";
     private boolean mHasCallback = false;
 
-    public void requestExperimentById(final String experimentId, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+    public void requestExperimentByParamName(final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+        // callback 为 null
+        if (callBack == null) {
+            SALog.i(TAG, "试验 callback 不正确，试验 callback 不能为空！");
+            return;
+        }
+
         // 传参非法
-        if (TextUtils.isEmpty(experimentId)) {
-            SALog.i(TAG, String.format("experiment_id：%s， 试验 ID 不正确，试验 ID 必须为非空字符串！", experimentId));
-            if (callBack != null && !mHasCallback) {
-                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_NULL_EXPERIMENT_ID, defaultValue);
+        if (TextUtils.isEmpty(paramName)) {
+            SALog.i(TAG, String.format("experiment param name：%s，试验参数名不正确，试验参数名必须为非空字符串！", paramName));
+            if (!mHasCallback) {
+                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_NULL_EXPERIMENT_PARAMETER_NAME, defaultValue);
                 callBack.onResult(defaultValue);
                 mHasCallback = true;
             }
@@ -64,7 +70,7 @@ public class SensorsABTestApiRequestHelper<T> {
         // 网络状态不可用
         Context context = SensorsABTest.shareInstance().getContext();
         if (context != null && !NetworkUtils.isNetworkAvailable(context)) {
-            if (callBack != null && !mHasCallback) {
+            if (!mHasCallback) {
                 SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_NETWORK_UNAVAILABLE, defaultValue);
                 callBack.onResult(defaultValue);
                 mHasCallback = true;
@@ -82,7 +88,7 @@ public class SensorsABTestApiRequestHelper<T> {
                 try {
                     TaskRunner.getBackHandler().removeCallbacks(runnable);
                     if (experimentMap == null) {
-                        if (callBack != null && !mHasCallback) {
+                        if (!mHasCallback) {
                             SALog.i(TAG, "onSuccess response is empty and return default value: " + defaultValue);
                             callBack.onResult(defaultValue);
                             mHasCallback = true;
@@ -90,9 +96,9 @@ public class SensorsABTestApiRequestHelper<T> {
                         return;
                     }
 
-                    Experiment experiment = experimentMap.get(experimentId);
+                    Experiment experiment = experimentMap.get(paramName);
                     if (experiment == null) {
-                        if (callBack != null && !mHasCallback) {
+                        if (!mHasCallback) {
                             SALog.i(TAG, "onSuccess experiment is empty and return default value: " + defaultValue);
                             callBack.onResult(defaultValue);
                             mHasCallback = true;
@@ -100,10 +106,15 @@ public class SensorsABTestApiRequestHelper<T> {
                         return;
                     }
 
-                    if (!experiment.checkTypeIsValid(defaultValue)) {
-                        if (callBack != null && !mHasCallback) {
+                    if (!experiment.checkTypeIsValid(paramName, defaultValue)) {
+                        if (!mHasCallback) {
                             if (defaultValue != null) {
-                                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, experimentId, experiment.type, defaultValue.getClass().toString());
+                                String variableType = "";
+                                Experiment.Variable variable = experiment.getVariableByParamName(paramName);
+                                if (variable != null) {
+                                    variableType = variable.type;
+                                }
+                                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, paramName, variableType, defaultValue.getClass().toString());
                             }
                             callBack.onResult(defaultValue);
                             mHasCallback = true;
@@ -111,9 +122,9 @@ public class SensorsABTestApiRequestHelper<T> {
                         return;
                     }
 
-                    T value = experiment.getExperimentVariable(defaultValue);
+                    T value = experiment.getVariableValue(paramName, defaultValue);
                     if (value != null) {
-                        if (callBack != null && !mHasCallback) {
+                        if (!mHasCallback) {
                             SALog.i(TAG, "onSuccess return value: " + value);
                             callBack.onResult(value);
                             mHasCallback = true;
@@ -121,11 +132,11 @@ public class SensorsABTestApiRequestHelper<T> {
                             SALog.i(TAG, "mOnABTestReceivedData is null ");
                         }
                         if (!experiment.isWhiteList) {
-                            SensorsABTestTrackHelper.trackABTestTrigger(experiment);
+                            SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment);
                         }
                     }
                 } catch (Exception e) {
-                    if (callBack != null && !mHasCallback) {
+                    if (!mHasCallback) {
                         SALog.i(TAG, "onSuccess Exception and return default value: " + defaultValue);
                         callBack.onResult(defaultValue);
                         mHasCallback = true;
@@ -136,7 +147,7 @@ public class SensorsABTestApiRequestHelper<T> {
             @Override
             public void onFailure(int errorCode, String message) {
                 TaskRunner.getBackHandler().removeCallbacks(runnable);
-                if (callBack != null && !mHasCallback) {
+                if (!mHasCallback) {
                     SALog.i(TAG, "onFailure and return default value: " + defaultValue);
                     callBack.onResult(defaultValue);
                     mHasCallback = true;

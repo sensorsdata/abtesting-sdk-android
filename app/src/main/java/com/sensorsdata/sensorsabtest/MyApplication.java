@@ -43,7 +43,7 @@ public class MyApplication extends Application {
                 .enableVisualizedAutoTrackConfirmDialog(true);
         SensorsDataAPI.startWithConfigOptions(this, configOptions);
 
-        SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://abtesting.saas.debugbox.sensorsdata.cn/api/v2/abtest/online/results?project-key=0a551836f92dc3292be545c748f3f462e2d43bc9");
+        SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://10.120.52.81:8222/api/v2/abtest/online/results?project-key=fake");
         SensorsABTest.startWithConfigOptions(this, abTestConfigOptions);
     }
 }

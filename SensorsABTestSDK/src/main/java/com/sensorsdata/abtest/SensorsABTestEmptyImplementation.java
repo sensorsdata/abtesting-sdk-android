@@ -35,23 +35,23 @@ public class SensorsABTestEmptyImplementation extends SensorsABTest {
     }
 
     @Override
-    public <T> T fetchCacheABTest(String experimentId, T defaultValue) {
+    public <T> T fetchCacheABTest(String paramName, T defaultValue) {
         return null;
     }
 
     @Override
-    public <T> void asyncFetchABTest(String experimentId, T defaultValue, OnABTestReceivedData<T> callBack) {
+    public <T> void asyncFetchABTest(String paramName, T defaultValue, OnABTestReceivedData<T> callBack) {
     }
 
     @Override
-    public <T> void asyncFetchABTest(String experimentId, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+    public <T> void asyncFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
     }
 
     @Override
-    public <T> void fastFetchABTest(String experimentId, T defaultValue, OnABTestReceivedData<T> callBack) {
+    public <T> void fastFetchABTest(String paramName, T defaultValue, OnABTestReceivedData<T> callBack) {
     }
 
     @Override
-    public <T> void fastFetchABTest(String experimentId, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+    public <T> void fastFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
     }
 }

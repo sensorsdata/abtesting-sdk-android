@@ -25,6 +25,8 @@ import com.sensorsdata.analytics.android.sdk.SALog;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.List;
+
 public class Experiment {
 
     private static final String TAG = "SAB.Experiment";
@@ -32,20 +34,36 @@ public class Experiment {
     public String experimentGroupId;
     public boolean isControlGroup;
     public boolean isWhiteList;
-    public JSONObject config;
-    public String variables;
-    public String type;
+    public List<Variable> variables;
 
-    public <T> boolean checkTypeIsValid(T defaultValue) {
+    public static class Variable {
+        public String name;
+        public String value;
+        public String type;
+
+        @Override
+        public String toString() {
+            return "Variable{" +
+                    "name='" + name + '\'' +
+                    ", value='" + value + '\'' +
+                    ", type='" + type + '\'' +
+                    '}';
+        }
+    }
+
+    public <T> boolean checkTypeIsValid(String paramName, T defaultValue) {
         if (defaultValue == null) {
             return true;
         }
-        if (TextUtils.isEmpty(type)) {
+
+        Variable variable = getVariableByParamName(paramName);
+        if (variable == null || TextUtils.isEmpty(variable.type)) {
             SALog.i(TAG, "checkTypeIsValid type is null");
             return false;
         }
-        SALog.i(TAG, "checkTypeIsValid params type: " + defaultValue.getClass().toString() + ", experiment type:" + type);
-        switch (type) {
+
+        SALog.i(TAG, "checkTypeIsValid params type: " + defaultValue.getClass().toString() + ", experiment type:" + variable.type);
+        switch (variable.type) {
             case "INTEGER":
                 return defaultValue instanceof Integer;
             case "BOOLEAN":
@@ -59,27 +77,34 @@ public class Experiment {
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getExperimentVariable(T defaultValue) {
+    public <T> T getVariableValue(String paramName, T defaultValue) {
         T result = null;
+
+        Variable variable = getVariableByParamName(paramName);
+        if (variable == null || TextUtils.isEmpty(variable.type)) {
+            SALog.i(TAG, "getExperimentVariable is null");
+            return null;
+        }
+
         // 如果用户传入 null，则以服务端类型为准
         try {
             if (defaultValue == null) {
-                switch (type) {
+                switch (variable.type) {
                     case "INTEGER":
-                        Integer integer = Integer.parseInt(variables);
+                        Integer integer = Integer.parseInt(variable.value);
                         result = (T) integer;
                         break;
                     case "BOOLEAN":
-                        Boolean aBoolean = Boolean.parseBoolean(variables);
+                        Boolean aBoolean = Boolean.parseBoolean(variable.value);
                         result = (T) aBoolean;
                         break;
                     case "STRING":
-                        String s = String.valueOf(variables);
+                        String s = String.valueOf(variable.value);
                         result = (T) s;
                         break;
                     case "JSON":
                         try {
-                            JSONObject jsonObject = new JSONObject(variables);
+                            JSONObject jsonObject = new JSONObject(variable.value);
                             result = (T) jsonObject;
                         } catch (JSONException e) {
                             SALog.printStackTrace(e);
@@ -90,17 +115,17 @@ public class Experiment {
             }
             // 如果用户传入类型不为 null ，则以传入类型为准
             if (defaultValue instanceof Integer) {
-                Integer integer = Integer.parseInt(variables);
+                Integer integer = Integer.parseInt(variable.value);
                 result = (T) integer;
             } else if (defaultValue instanceof Boolean) {
-                Boolean aBoolean = Boolean.parseBoolean(variables);
+                Boolean aBoolean = Boolean.parseBoolean(variable.value);
                 result = (T) aBoolean;
             } else if (defaultValue instanceof String) {
-                String s = String.valueOf(variables);
+                String s = String.valueOf(variable.value);
                 result = (T) s;
             } else if (defaultValue instanceof JSONObject) {
                 try {
-                    JSONObject jsonObject = new JSONObject(variables);
+                    JSONObject jsonObject = new JSONObject(variable.value);
                     result = (T) jsonObject;
                 } catch (JSONException e) {
                     SALog.printStackTrace(e);
@@ -112,6 +137,17 @@ public class Experiment {
         return result;
     }
 
+     public Variable getVariableByParamName(String paramName) {
+        if (variables != null && variables.size() > 0) {
+            for (Variable variable : variables) {
+                if (TextUtils.equals(paramName, variable.name)) {
+                    return variable;
+                }
+            }
+        }
+        return null;
+    }
+
     @Override
     public String toString() {
         return "Experiment{" +
@@ -119,7 +155,7 @@ public class Experiment {
                 ", experimentGroupId='" + experimentGroupId + '\'' +
                 ", isControlGroup=" + isControlGroup +
                 ", isWhiteList=" + isWhiteList +
-                ", config=" + config +
+                ", variables=" + variables +
                 '}';
     }
 }

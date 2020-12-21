@@ -1,6 +1,6 @@
 <resources>
     <string name="app_name">SensorsABTest</string>
-    <string name="spinner_alert">试验 ID</string>
+    <string name="spinner_alert">试验参数名</string>
     <string name="spinner_type">试验类型</string>
     <string name="spinner_default_value">默认值</string>
 </resources>

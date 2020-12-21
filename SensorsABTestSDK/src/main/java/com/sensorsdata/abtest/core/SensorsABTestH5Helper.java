@@ -18,6 +18,7 @@
 package com.sensorsdata.abtest.core;
 
 import android.text.TextUtils;
+import android.util.Base64;
 import android.view.View;
 
 import com.sensorsdata.abtest.entity.AppConstants;
@@ -79,7 +80,7 @@ class SensorsABTestH5Helper implements WebViewJavascriptBridge {
                                 JSONObject dataObject = new JSONObject(s);
                                 object.put("data", dataObject);
                                 SALog.i(TAG, "onSuccess callJS object: " + object.toString());
-                                callJs(object.toString());
+                                callJs(string2Base64(object.toString()));
                             } catch (JSONException e) {
                                 SALog.printStackTrace(e);
                             }
@@ -102,7 +103,7 @@ class SensorsABTestH5Helper implements WebViewJavascriptBridge {
                             try {
                                 object.put("message_id", request.messageId);
                                 SALog.i(TAG, "onFailure callJS object: " + object.toString());
-                                callJs(object.toString());
+                                callJs(string2Base64(object.toString()));
                             } catch (JSONException e) {
                                 SALog.printStackTrace(e);
                             }
@@ -139,5 +140,9 @@ class SensorsABTestH5Helper implements WebViewJavascriptBridge {
         } catch (Exception var6) {
             SALog.printStackTrace(var6);
         }
+    }
+
+    private static String string2Base64(String s) {
+        return Base64.encodeToString(s.getBytes(), Base64.DEFAULT);
     }
 }

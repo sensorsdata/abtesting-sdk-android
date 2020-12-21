@@ -30,6 +30,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class SensorsABTestCacheManager implements IExperimentCacheAPI {
@@ -97,13 +99,24 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
                         experiment.experimentGroupId = object.optString("abtest_experiment_group_id");
                         experiment.isControlGroup = object.optBoolean("is_control_group");
                         experiment.isWhiteList = object.optBoolean("is_white_list");
-                        JSONObject configObject = object.optJSONObject("config");
-                        if (configObject != null) {
-                            experiment.config = configObject;
-                            experiment.variables = configObject.optString("variables");
-                            experiment.type = configObject.optString("type");
+
+                        JSONArray variablesArray = object.optJSONArray("variables");
+                        if (variablesArray != null && variablesArray.length() > 0) {
+                            List<Experiment.Variable> list = new ArrayList<>();
+                            for (int j = 0; j < variablesArray.length(); j++) {
+                                JSONObject variableObject = variablesArray.optJSONObject(j);
+                                Experiment.Variable variable = new Experiment.Variable();
+                                variable.type = variableObject.optString("type");
+                                variable.name = variableObject.optString("name");
+                                variable.value = variableObject.optString("value");
+                                list.add(variable);
+                                // 服务端对试验列表排序，不同的试验相同 key 按照顺序优先取第一个
+                                if (!hashMap.containsKey(variable.name)) {
+                                    hashMap.put(variable.name, experiment);
+                                }
+                            }
+                            experiment.variables = list;
                         }
-                        hashMap.put(experiment.experimentId, experiment);
                     }
                 }
                 SALog.i(TAG, "saveExperiments2MemoryCache | experiments:\n" + JSONUtils.formatJson(hashMap.toString()));
@@ -124,52 +137,55 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
     }
 
     /**
-     * 从内存缓存中获取试验命中的变量值
+     * 从内存缓存中获取命中的试验实体
      *
-     * @param experimentId 试验 id
-     * @return 试验命中的试验实体
+     * @param paramName 试验参数名
+     * @return 命中的试验实体
      */
-    private Experiment getExperimentById(String experimentId) {
-        if (experimentId != null && mHashMap.containsKey(experimentId)) {
-            return mHashMap.get(experimentId);
+    private Experiment getExperimentByParamName(String paramName) {
+        if (paramName != null && mHashMap.containsKey(paramName)) {
+            return mHashMap.get(paramName);
         }
         return null;
     }
 
     /**
-     * 获取缓存中的实验变量值
+     * 获取缓存中的试验变量值
      *
-     * @param experimentId 试验 id
+     * @param paramName 试验参数名
      * @param defaultValue 默认值
      * @param <T> 类型
-     * @return 缓存中的实验变量
+     * @return 缓存中的试验变量值
      */
-    public <T> T getExperimentVariable(String experimentId, T defaultValue) {
-        if (TextUtils.isEmpty(experimentId)) {
-            SALog.i(TAG, String.format("experiment_id：%s， 试验 ID 不正确，试验 ID 必须为非空字符串！", experimentId));
+    public <T> T getExperimentVariableValue(String paramName, T defaultValue) {
+        if (TextUtils.isEmpty(paramName)) {
+            SALog.i(TAG, String.format("experiment param name：%s，试验参数名不正确，试验参数名必须为非空字符串！", paramName));
             return null;
         }
         if (defaultValue != null) {
-            SALog.i(TAG, "getExperimentVariable experimentId: " + experimentId + " ,params type: " + defaultValue.getClass());
+            SALog.i(TAG, "getExperimentVariableValue param name: " + paramName + " , type: " + defaultValue.getClass());
         }
-        Experiment experiment = getExperimentById(experimentId);
+        Experiment experiment = getExperimentByParamName(paramName);
         if (experiment != null) {
-            SALog.i(TAG, "getExperimentVariable experiment type: " + experiment.type);
-            if (experiment.checkTypeIsValid(defaultValue)) {
-                T t = experiment.getExperimentVariable(defaultValue);
+            if (experiment.checkTypeIsValid(paramName, defaultValue)) {
+                T t = experiment.getVariableValue(paramName, defaultValue);
                 if (t != null) {
-                    SALog.i(TAG, "getExperimentVariable success and type: " + t.getClass() + " ,value: " + t.toString());
+                    SALog.i(TAG, "getExperimentVariableValue success and type: " + t.getClass() + " ,value: " + t.toString());
                     if (!experiment.isWhiteList) {
-                        SensorsABTestTrackHelper.trackABTestTrigger(experiment);
+                        SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment);
                     }
                 }
                 return t;
             } else if (defaultValue != null) {
-                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, experimentId, experiment.type, defaultValue.getClass().toString());
+                String variableType = "";
+                Experiment.Variable variable = experiment.getVariableByParamName(paramName);
+                if (variable != null) {
+                    variableType = variable.type;
+                }
+                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, paramName, variableType, defaultValue.getClass().toString());
             }
         }
-        SALog.i(TAG, "getExperimentVariable return null");
+        SALog.i(TAG, "getExperimentVariableValue return null");
         return null;
     }
-
 }

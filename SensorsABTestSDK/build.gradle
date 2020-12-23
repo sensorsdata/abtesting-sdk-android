@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'com.github.dcendents.android-maven'
 apply plugin: 'com.jfrog.bintray'
 
-version = "0.0.2"
+version = "0.0.1"
 android {
     compileSdkVersion 29
 
@@ -93,7 +93,7 @@ artifacts {
 def siteUrl = 'https://github.com/sensorsdata/abtesting-sdk-android'
 def gitUrl = 'https://github.com/sensorsdata/abtesting-sdk-android.git'
 
-group = "com.sensorsdata.abtesting"
+group = "com.sensorsdata.analytics.abtesting"
 project.archivesBaseName = "SensorsABTesting"
 
 install {

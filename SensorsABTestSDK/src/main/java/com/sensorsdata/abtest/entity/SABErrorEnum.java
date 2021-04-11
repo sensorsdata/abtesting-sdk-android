@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/12.
- * Copyright 2015－2020 Sensors Data Inc.
+ * Copyright 2015－2021 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,7 @@ public enum SABErrorEnum {
     ASYNC_REQUEST_NULL_EXPERIMENT_PARAMETER_NAME("1001", "The experiment param name of async request is empty and return default value: %s"),
     ASYNC_REQUEST_NETWORK_UNAVAILABLE("1002", "Network is unavailable and return default value: %s"),
     ASYNC_REQUEST_TIMEOUT("1003", "AsyncRequest is timeout and return default value: %s"),
-    ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID("1004", "试验结果类型与代码期望类型不一致，试验参数名：%s，当前返回类型为：%s，代码期望类型为：%s"),
-
-    // 服务端接口返回问题，错误码以 2 开头
-    SERVER_UNKNOWN("2001", "服务端未知错误. code: %s, message: %s");
+    ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID("1004", "试验结果类型与代码期望类型不一致，试验参数名：%s，当前返回类型为：%s，代码期望类型为：%s");
 
     public String code;
     public String message;

@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/12.
- * Copyright 2015－2020 Sensors Data Inc.
+ * Copyright 2015－2021 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,17 @@ public class SABErrorDispatcher {
     private static final String TAG = "SAB.GlobalException";
 
     public static void dispatchSABException(SABErrorEnum exceptionEnum, Object... arrays) {
-        if (arrays != null && arrays.length > 0) {
-            exceptionEnum.message = String.format(exceptionEnum.message, arrays);
+        try {
+            String message = "";
+            if (arrays != null && arrays.length > 0) {
+                message = String.format(exceptionEnum.message, arrays);
+            } else {
+                message = exceptionEnum.message;
+            }
+            String printLog = "error code: " + exceptionEnum.code + " , message: " + message;
+            SALog.i(TAG, printLog);
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
         }
-        String printLog = "error code: " + exceptionEnum.code + " , message: " + exceptionEnum.message;
-        SALog.i(TAG, printLog);
     }
 }

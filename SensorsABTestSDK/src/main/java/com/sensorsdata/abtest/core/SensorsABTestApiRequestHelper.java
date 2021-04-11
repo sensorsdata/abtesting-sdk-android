@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/09.
- * Copyright 2015－2020 Sensors Data Inc.
+ * Copyright 2015－2021 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,7 @@ public class SensorsABTestApiRequestHelper<T> {
 
             @Override
             public void onFailure(int errorCode, String message) {
-                SABErrorDispatcher.dispatchSABException(SABErrorEnum.SERVER_UNKNOWN, errorCode, message);
+                SALog.i(TAG, "onFailure error_code: " + errorCode + ",message: " + message);
                 if (callBack != null) {
                     callBack.onFailure(errorCode, message);
                 }

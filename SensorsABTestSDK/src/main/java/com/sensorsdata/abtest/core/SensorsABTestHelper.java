@@ -132,24 +132,33 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
     @Override
     public void login() {
         SALog.i(TAG, "login");
-        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
+        onDistinctIdChanged();
     }
 
     @Override
     public void logout() {
         SALog.i(TAG, "logout");
-        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
+        onDistinctIdChanged();
     }
 
     @Override
     public void identify() {
         SALog.i(TAG, "identify");
-        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
+        onDistinctIdChanged();
     }
 
     @Override
     public void resetAnonymousId() {
         SALog.i(TAG, "resetAnonymousId");
-        new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
+        onDistinctIdChanged();
+    }
+
+    private void onDistinctIdChanged() {
+        try {
+            SensorsABTestCacheManager.getInstance().clearCache();
+            new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
+        }
     }
 }

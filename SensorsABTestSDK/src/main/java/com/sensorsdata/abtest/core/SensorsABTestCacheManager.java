@@ -24,10 +24,10 @@ import com.sensorsdata.abtest.entity.Experiment;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.util.SPUtils;
 import com.sensorsdata.analytics.android.sdk.SALog;
+import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.util.JSONUtils;
 
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
 
     private static final String TAG = "SAB.SensorsABTestCacheManager";
     public ConcurrentHashMap<String, Experiment> mHashMap;
-    private static final String KEY_EXPERIMENT = "key_experiment";
+    private static final String KEY_EXPERIMENT = "key_experiment_with_distinct_id";
 
     private SensorsABTestCacheManager() {
         mHashMap = new ConcurrentHashMap<>();
@@ -86,7 +86,25 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
             return hashMap;
         }
         try {
-            JSONArray array = new JSONArray(result);
+            JSONObject jsonObject = new JSONObject(result);
+            String experiments = jsonObject.optString("experiments");
+            if (TextUtils.isEmpty(experiments)) {
+                mHashMap.clear();
+                return hashMap;
+            }
+            parseCache(experiments, hashMap);
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
+        }
+        mHashMap.clear();
+        mHashMap.putAll(hashMap);
+        return hashMap;
+    }
+
+    private void parseCache(String result, ConcurrentHashMap<String, Experiment> hashMap) {
+        JSONArray array = null;
+        try {
+            array = new JSONArray(result);
             if (array.length() > 0) {
                 for (int i = 0; i < array.length(); i++) {
                     JSONObject object = array.optJSONObject(i);
@@ -121,12 +139,9 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
                 }
                 SALog.i(TAG, "saveExperiments2MemoryCache | experiments:\n" + JSONUtils.formatJson(hashMap.toString()));
             }
-        } catch (JSONException e) {
+        } catch (Exception e) {
             SALog.printStackTrace(e);
         }
-        mHashMap.clear();
-        mHashMap.putAll(hashMap);
-        return hashMap;
     }
 
     @Override
@@ -134,6 +149,13 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
         ConcurrentHashMap<String, Experiment> hashMap = getExperimentsFromMemoryCache(result);
         saveExperiments2DiskCache(result);
         return hashMap;
+    }
+
+    /**
+     * 清除文件缓存
+     */
+    void clearCache() {
+        loadExperimentsFromCache("");
     }
 
     /**

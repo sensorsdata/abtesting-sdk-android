@@ -29,6 +29,10 @@ import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.util.AppInfoUtils;
 import com.sensorsdata.abtest.util.UrlUtil;
 import com.sensorsdata.analytics.android.sdk.SALog;
+import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
+import com.sensorsdata.analytics.android.sdk.TrackTaskManager;
+
+import java.lang.reflect.Method;
 
 public class SensorsABTest implements ISensorsABTestApi {
 
@@ -142,7 +146,20 @@ public class SensorsABTest implements ISensorsABTestApi {
     }
 
     @Override
-    public <T> void asyncFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+    public <T> void asyncFetchABTest(final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+        try {
+            addTrackEventTask(new Runnable() {
+                @Override
+                public void run() {
+                    asyncFetchABTestInner(SensorsDataAPI.sharedInstance().getDistinctId(), paramName, defaultValue, timeoutMillSeconds, callBack);
+                }
+            });
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
+        }
+    }
+
+    private <T> void asyncFetchABTestInner(final String distinctId, final String paramName, final T defaultValue, int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         try {
             if (timeoutMillSeconds > 0) {
                 SALog.i(TAG, "timeoutMillSeconds minimum value is 1000ms");
@@ -152,7 +169,7 @@ public class SensorsABTest implements ISensorsABTestApi {
                 timeoutMillSeconds = TIMEOUT_REQUEST;
             }
             SALog.i(TAG, "asyncFetchABTest request param name: " + paramName + ",default value: " + defaultValue + ",timeoutMillSeconds: " + timeoutMillSeconds);
-            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(paramName, defaultValue, timeoutMillSeconds, callBack);
+            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, paramName, defaultValue, timeoutMillSeconds, callBack);
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }
@@ -168,13 +185,37 @@ public class SensorsABTest implements ISensorsABTestApi {
     }
 
     @Override
-    public <T> void fastFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+    public <T> void fastFetchABTest(final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         try {
-            T t = SensorsABTestCacheManager.getInstance().getExperimentVariableValue(paramName, defaultValue);
-            if (t != null && callBack != null) {
-                callBack.onResult(t);
-            } else {
-                asyncFetchABTest(paramName, defaultValue, timeoutMillSeconds, callBack);
+            addTrackEventTask(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
+                        T t = SensorsABTestCacheManager.getInstance().getExperimentVariableValue(paramName, defaultValue);
+                        if (t != null && callBack != null) {
+                            callBack.onResult(t);
+                        } else {
+                            asyncFetchABTestInner(distinctId, paramName, defaultValue, timeoutMillSeconds, callBack);
+                        }
+                    } catch (Exception e) {
+                        SALog.printStackTrace(e);
+                    }
+                }
+            });
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
+        }
+    }
+
+    private static void addTrackEventTask(Runnable runnable) {
+        try {
+            Object obj = TrackTaskManager.getInstance();
+            if (obj != null) {
+                Class<?> clazz = obj.getClass();
+                Method addTrackEventTask = clazz.getDeclaredMethod("addTrackEventTask", Runnable.class);
+                addTrackEventTask.setAccessible(true);
+                addTrackEventTask.invoke(obj, runnable);
             }
         } catch (Exception e) {
             SALog.printStackTrace(e);

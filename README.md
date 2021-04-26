@@ -13,6 +13,14 @@ SensorsAnalytics SDK 是国内第一家开源商用版用户行为采集 SDK，�
 ## 基本要求
 Android 4.0 及以上。
 
+## 贡献
+
+* 1.  在您的 GitHub 账户下 fork sa-sdk-android 开源项目；
+* 2.  根据您的需求在本地 clone 一份 sa-sdk-android 源码；
+* 3.  您修改或者新增功能后，push 到您 fork 的远程分支；
+* 4.  创建 pull request，向 sa-sdk-android 官方开发分支提交合入请求；
+* 5.  神策 SDK 研发团队会及时 review 代码，测试通过后合入。
+
 ## 规划
 
 可参考 [ROADMAP](ROADMAP.md).
@@ -35,6 +43,11 @@ Android 4.0 及以上。
 | 《数据驱动：从方法到实践》 | 《Android 全埋点解决方案》 | 《iOS 全埋点解决方案》
 | ------ | ------ | ------ |
 | [![《数据驱动：从方法到实践》](https://opensource.sensorsdata.cn/wp-content/uploads/data_driven_book_1.jpg)](https://item.jd.com/12322322.html) | [![《Android 全埋点解决方案》](https://opensource.sensorsdata.cn/wp-content/uploads/Android-全埋点thumbnail_1.png)](https://item.jd.com/12574672.html) | [![《iOS 全埋点解决方案》](https://opensource.sensorsdata.cn/wp-content/uploads/iOS-全埋点thumbnail_1.png)](https://item.jd.com/12867068.html)
+
+## 感谢
+- [mixpanel-android](https://github.com/mixpanel/mixpanel-android) 
+- [TiDB](https://github.com/pingcap/tidb) 
+- [Knight-ZXW](https://github.com/Knight-ZXW)
 
 ## License
 

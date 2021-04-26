@@ -31,6 +31,8 @@ import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.abtest.util.UrlUtil;
 import com.sensorsdata.analytics.android.sdk.SALog;
+import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
+import com.sensorsdata.analytics.android.sdk.TrackTaskManager;
 import com.sensorsdata.analytics.android.sdk.network.HttpCallback;
 import com.sensorsdata.analytics.android.sdk.network.HttpMethod;
 import com.sensorsdata.analytics.android.sdk.network.RequestHelper;
@@ -48,8 +50,9 @@ public class SensorsABTestApiRequestHelper<T> {
 
     private static final String TAG = "SAB.SensorsABTestApiRequestHelper";
     private boolean mHasCallback = false;
+    private String mDistinctId;
 
-    public void requestExperimentByParamName(final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+    public void requestExperimentByParamName(final String distinctId, final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         // callback 为 null
         if (callBack == null) {
             SALog.i(TAG, "试验 callback 不正确，试验 callback 不能为空！");
@@ -81,6 +84,7 @@ public class SensorsABTestApiRequestHelper<T> {
         // 启动定时器
         final TimeoutRunnable runnable = new TimeoutRunnable(callBack, defaultValue);
         TaskRunner.getBackHandler().postDelayed(runnable, timeoutMillSeconds);
+        mDistinctId = distinctId;
 
         requestExperimentsAndUpdateCache(new IApiCallback<Map<String, Experiment>>() {
             @Override
@@ -216,7 +220,13 @@ public class SensorsABTestApiRequestHelper<T> {
                     if (TextUtils.equals(AppConstants.AB_TEST_SUCCESS, status)) {
                         SALog.i(TAG, String.format("获取试验成功：results：%s", JSONUtils.formatJson(response.toString())));
                         JSONArray array = response.optJSONArray("results");
-                        hashMap = SensorsABTestCacheManager.getInstance().loadExperimentsFromCache(array != null ? array.toString() : "");
+                        JSONObject object = null;
+                        if (array != null) {
+                            object = new JSONObject();
+                            object.put("experiments", array);
+                            object.put("distinct_id", mDistinctId);
+                        }
+                        hashMap = SensorsABTestCacheManager.getInstance().loadExperimentsFromCache(object != null ? object.toString() : "");
                     } else if (TextUtils.equals(AppConstants.AB_TEST_FAILURE, status)) {
                         SALog.i(TAG, String.format("获取试验失败：error_type：%s，error：%s", response.optString("error_type"), response.optString("error")));
                     }

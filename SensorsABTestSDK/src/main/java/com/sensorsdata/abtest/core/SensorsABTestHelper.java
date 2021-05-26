@@ -21,6 +21,7 @@ package com.sensorsdata.abtest.core;
 import android.app.Application;
 import android.content.Context;
 import android.os.CountDownTimer;
+import android.text.TextUtils;
 import android.view.View;
 
 import com.sensorsdata.abtest.entity.Experiment;
@@ -32,6 +33,7 @@ import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.listener.SAEventListener;
 import com.sensorsdata.analytics.android.sdk.listener.SAJSListener;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
@@ -127,6 +129,42 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
 
     @Override
     public void trackEvent(JSONObject jsonObject) {
+        try {
+            String event = jsonObject.optString("event");
+            if (TextUtils.equals("$ABTestTrigger", event)) {
+                JSONObject properties = jsonObject.optJSONObject("properties");
+                if (properties == null) {
+                    return;
+                }
+                SALog.i(TAG, String.format("distinct_id is %s,login_id is %s,anonymous_id is %s", properties.optString("$abtest_distinct_id"), properties.optString("$abtest_login_id"), properties.optString("$abtest_anonymous_id")));
+                if (properties.has("$abtest_distinct_id")) {
+                    try {
+                        jsonObject.put("distinct_id", properties.optString("$abtest_distinct_id"));
+                        properties.remove("$abtest_distinct_id");
+                    } catch (JSONException e) {
+                        SALog.printStackTrace(e);
+                    }
+                }
+                if (properties.has("$abtest_login_id")) {
+                    try {
+                        jsonObject.put("login_id", properties.optString("$abtest_login_id"));
+                        properties.remove("$abtest_login_id");
+                    } catch (JSONException e) {
+                        SALog.printStackTrace(e);
+                    }
+                }
+                if (properties.has("$abtest_anonymous_id")) {
+                    try {
+                        jsonObject.put("anonymous_id", properties.optString("$abtest_anonymous_id"));
+                        properties.remove("$abtest_anonymous_id");
+                    } catch (JSONException e) {
+                        SALog.printStackTrace(e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
+        }
     }
 
     @Override

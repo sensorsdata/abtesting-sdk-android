@@ -31,8 +31,6 @@ import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.abtest.util.UrlUtil;
 import com.sensorsdata.analytics.android.sdk.SALog;
-import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
-import com.sensorsdata.analytics.android.sdk.TrackTaskManager;
 import com.sensorsdata.analytics.android.sdk.network.HttpCallback;
 import com.sensorsdata.analytics.android.sdk.network.HttpMethod;
 import com.sensorsdata.analytics.android.sdk.network.RequestHelper;
@@ -52,7 +50,7 @@ public class SensorsABTestApiRequestHelper<T> {
     private boolean mHasCallback = false;
     private String mDistinctId;
 
-    public void requestExperimentByParamName(final String distinctId, final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+    public void requestExperimentByParamName(final String distinctId, final String loginId, final String anonymousId, final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         // callback 为 null
         if (callBack == null) {
             SALog.i(TAG, "试验 callback 不正确，试验 callback 不能为空！");
@@ -84,8 +82,8 @@ public class SensorsABTestApiRequestHelper<T> {
         // 启动定时器
         final TimeoutRunnable runnable = new TimeoutRunnable(callBack, defaultValue);
         TaskRunner.getBackHandler().postDelayed(runnable, timeoutMillSeconds);
-        mDistinctId = distinctId;
 
+        mDistinctId = distinctId;
         requestExperimentsAndUpdateCache(new IApiCallback<Map<String, Experiment>>() {
             @Override
             public void onSuccess(Map<String, Experiment> experimentMap) {
@@ -136,7 +134,7 @@ public class SensorsABTestApiRequestHelper<T> {
                             SALog.i(TAG, "mOnABTestReceivedData is null ");
                         }
                         if (!experiment.isWhiteList) {
-                            SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment);
+                            SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, distinctId, loginId, anonymousId);
                         }
                     }
                 } catch (Exception e) {

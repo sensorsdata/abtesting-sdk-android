@@ -194,7 +194,7 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
                 if (t != null) {
                     SALog.i(TAG, "getExperimentVariableValue success and type: " + t.getClass() + " ,value: " + t.toString());
                     if (!experiment.isWhiteList) {
-                        SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment);
+                        SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, SensorsDataAPI.sharedInstance().getDistinctId(), SensorsDataAPI.sharedInstance().getLoginId(), SensorsDataAPI.sharedInstance().getAnonymousId());
                     }
                 }
                 return t;

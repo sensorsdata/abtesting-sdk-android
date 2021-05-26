@@ -1,8 +1,8 @@
 apply plugin: 'com.android.library'
-apply plugin: 'com.github.dcendents.android-maven'
-apply plugin: 'com.jfrog.bintray'
+apply plugin: 'signing'
+apply plugin: 'maven-publish'
 
-version = "0.0.4"
+version = "0.0.5"
 android {
     compileSdkVersion 29
 
@@ -47,10 +47,10 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    compileOnly 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:4.3.6'
+    compileOnly 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:5.2.1'
 }
 
-task sourcesJar(type: Jar) {
+task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
     classifier = 'sources'
 }
@@ -74,92 +74,59 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-task makeJar(type: Copy) {
-    def jarName = 'SensorsABTesting-Android-SDK-Release-' + version + '.jar'
-    delete 'build/libs/' + jarName
-    from('build/intermediates/packaged-classes/release/')
-    into('build/libs/')
-    include('classes.jar')
-    rename('classes.jar', jarName)
-}
-
-makeJar.dependsOn(build)
-
-artifacts {
-    archives javadocJar
-    archives sourcesJar
-}
-
-def siteUrl = 'https://github.com/sensorsdata/abtesting-sdk-android'
-def gitUrl = 'https://github.com/sensorsdata/abtesting-sdk-android.git'
-
-group = "com.sensorsdata.analytics.abtesting"
-project.archivesBaseName = "SensorsABTesting"
-
-install {
-    repositories.mavenInstaller {
-        // generates POM.xml with proper parameters
-        pom {
-            project {
+publishing {
+    publications {
+        mavenAndroid(MavenPublication) {
+            groupId = 'com.sensorsdata.analytics.abtesting'
+            artifactId = 'SensorsABTesting'
+            version = version
+            artifact sourceJar
+            artifact javadocJar
+            artifact('build/outputs/aar/SensorsABTestSDK-release.aar')
+            // 配置 pop 文件格式
+            pom {
                 packaging 'aar'
-                name 'The official Android SDK for Sensors A/B Testing.'
-                description 'The official Android SDK for Sensors A/B Testing.'
-                url siteUrl
-                // Set your license
+                name = 'The official Android SDK for Sensors A/B Testing.'
+                description = 'The official Android SDK for Sensors A/B Testing.'
+                url = 'The official Android SDK for Sensors A/B Testing.'
                 licenses {
                     license {
-                        name 'The Apache Software License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                        name='The Apache Software License, Version 2.0'
+                        url='http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
                 developers {
                     developer {
-                        id 'dengshiwei'
-                        name 'ShiWeiDeng'
-                        email 'dengshiwei@sensorsdata.cn'
+                        id = 'dengshiwei'
+                        name = 'dengshiwei'
+                        email = 'dengshiwei@sensorsdata.com'
                     }
                 }
                 scm {
-                    connection gitUrl
-                    developerConnection gitUrl
-                    url siteUrl
+                    connection = 'https://github.com/sensorsdata/abtesting-sdk-android'
+                    developerConnection = 'https://github.com/sensorsdata/abtesting-sdk-android.git'
+                    url = 'https://github.com/sensorsdata/abtesting-sdk-android'
                 }
+            }
+        }
+    }
+    // 配置远程仓库
+    repositories {
+        Properties properties = new Properties()
+        properties.load(project.rootProject.file('local.properties').newDataInputStream())
+        def mavenUser = properties.getProperty("maven.user")
+        def mavenPassword = properties.getProperty("maven.password")
+        maven {
+            url = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            credentials {
+                username mavenUser
+                password mavenPassword
             }
         }
     }
 }
 
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-bintray {
-    user = properties.getProperty("bintray.user")
-    key = properties.getProperty("bintray.apikey")
-
-    def mavenUser = properties.getProperty("maven.user")
-    def mavenPassword = properties.getProperty("maven.password")
-
-    configurations = ['archives']
-    pkg {
-        repo = "maven"
-        name = "SensorsABTesting"
-        desc = 'The official Android SDK PRE for Sensors A/B Testing.'
-        websiteUrl = siteUrl
-        vcsUrl = gitUrl
-        licenses = ["Apache-2.0"]
-        labels = ['android']
-        publish = true
-        publicDownloadNumbers = true
-        version {
-            mavenCentralSync {
-                sync = true
-                //Optional (true by default). Determines whether to sync the version to Maven Central.
-                user = mavenUser //OSS user token
-                password = mavenPassword //OSS user password
-                close = '1'
-                //Optional property. By default the staging repository is closed and artifacts are released to Maven Central.
-                // You can optionally turn this behaviour off (by putting 0 as value) and release the version manually.
-            }
-        }
-
-    }
+// 对 mavenAndroid 发布内容进行签名
+signing {
+    sign publishing.publications.mavenAndroid
 }

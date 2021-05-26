@@ -50,13 +50,12 @@ class SensorsABTestTrackHelper {
         return mInstance;
     }
 
-    public void trackABTestTrigger(Experiment experiment) {
+    public void trackABTestTrigger(Experiment experiment, String distinctId, String loginId, String anonymousId) {
         if (experiment == null || TextUtils.isEmpty(experiment.experimentId)) {
             SALog.i(TAG, "trackABTestTrigger param experiment is invalid");
             return;
         }
 
-        String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
         if (TextUtils.isEmpty(distinctId)) {
             SALog.i(TAG, "trackABTestTrigger distinctId is null");
             return;
@@ -71,11 +70,17 @@ class SensorsABTestTrackHelper {
         try {
             jsonObject.put("$abtest_experiment_id", experiment.experimentId);
             jsonObject.put("$abtest_experiment_group_id", experiment.experimentGroupId);
-            if(mABTestTriggerEventHashMap == null){
+            if (mABTestTriggerEventHashMap == null) {
                 JSONArray array = getSDKVersion();
-                if(array != null){
+                if (array != null) {
                     jsonObject.put("$lib_plugin_version", array);
                 }
+            }
+            // 当前 id 和试验请求 id 不一致时，以试验请求 id 为准
+            if (!TextUtils.equals(SensorsDataAPI.sharedInstance().getDistinctId(), distinctId)) {
+                jsonObject.put("$abtest_distinct_id", distinctId);
+                jsonObject.put("$abtest_login_id", loginId);
+                jsonObject.put("$abtest_anonymous_id", anonymousId);
             }
             SensorsDataAPI.sharedInstance().track("$ABTestTrigger", jsonObject);
             addExperimentId2HashMap(experiment.experimentId, distinctId);

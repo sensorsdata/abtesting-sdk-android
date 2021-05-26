@@ -151,7 +151,7 @@ public class SensorsABTest implements ISensorsABTestApi {
             addTrackEventTask(new Runnable() {
                 @Override
                 public void run() {
-                    asyncFetchABTestInner(SensorsDataAPI.sharedInstance().getDistinctId(), paramName, defaultValue, timeoutMillSeconds, callBack);
+                    asyncFetchABTestInner(paramName, defaultValue, timeoutMillSeconds, callBack);
                 }
             });
         } catch (Exception e) {
@@ -159,7 +159,7 @@ public class SensorsABTest implements ISensorsABTestApi {
         }
     }
 
-    private <T> void asyncFetchABTestInner(final String distinctId, final String paramName, final T defaultValue, int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+    private <T> void asyncFetchABTestInner(final String paramName, final T defaultValue, int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         try {
             if (timeoutMillSeconds > 0) {
                 SALog.i(TAG, "timeoutMillSeconds minimum value is 1000ms");
@@ -169,7 +169,10 @@ public class SensorsABTest implements ISensorsABTestApi {
                 timeoutMillSeconds = TIMEOUT_REQUEST;
             }
             SALog.i(TAG, "asyncFetchABTest request param name: " + paramName + ",default value: " + defaultValue + ",timeoutMillSeconds: " + timeoutMillSeconds);
-            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, paramName, defaultValue, timeoutMillSeconds, callBack);
+            final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
+            final String loginId = SensorsDataAPI.sharedInstance().getLoginId();
+            final String anonymousId = SensorsDataAPI.sharedInstance().getAnonymousId();
+            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, loginId, anonymousId, paramName, defaultValue, timeoutMillSeconds, callBack);
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }
@@ -191,12 +194,11 @@ public class SensorsABTest implements ISensorsABTestApi {
                 @Override
                 public void run() {
                     try {
-                        String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
                         T t = SensorsABTestCacheManager.getInstance().getExperimentVariableValue(paramName, defaultValue);
                         if (t != null && callBack != null) {
                             callBack.onResult(t);
                         } else {
-                            asyncFetchABTestInner(distinctId, paramName, defaultValue, timeoutMillSeconds, callBack);
+                            asyncFetchABTestInner(paramName, defaultValue, timeoutMillSeconds, callBack);
                         }
                     } catch (Exception e) {
                         SALog.printStackTrace(e);

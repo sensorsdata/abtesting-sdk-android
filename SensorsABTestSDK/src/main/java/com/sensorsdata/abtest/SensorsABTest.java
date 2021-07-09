@@ -27,6 +27,7 @@ import com.sensorsdata.abtest.core.SensorsABTestApiRequestHelper;
 import com.sensorsdata.abtest.core.SensorsABTestCacheManager;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.util.AppInfoUtils;
+import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.abtest.util.UrlUtil;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
@@ -194,9 +195,14 @@ public class SensorsABTest implements ISensorsABTestApi {
                 @Override
                 public void run() {
                     try {
-                        T t = SensorsABTestCacheManager.getInstance().getExperimentVariableValue(paramName, defaultValue);
+                        final T t = SensorsABTestCacheManager.getInstance().getExperimentVariableValue(paramName, defaultValue);
                         if (t != null && callBack != null) {
-                            callBack.onResult(t);
+                            TaskRunner.getUiThreadHandler().post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    callBack.onResult(t);
+                                }
+                            });
                         } else {
                             asyncFetchABTestInner(paramName, defaultValue, timeoutMillSeconds, callBack);
                         }

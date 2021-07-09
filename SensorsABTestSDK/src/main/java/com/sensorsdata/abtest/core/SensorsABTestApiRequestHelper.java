@@ -62,8 +62,13 @@ public class SensorsABTestApiRequestHelper<T> {
             SALog.i(TAG, String.format("experiment param name：%s，试验参数名不正确，试验参数名必须为非空字符串！", paramName));
             if (!mHasCallback) {
                 SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_NULL_EXPERIMENT_PARAMETER_NAME, defaultValue);
-                callBack.onResult(defaultValue);
                 mHasCallback = true;
+                TaskRunner.getUiThreadHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callBack.onResult(defaultValue);
+                    }
+                });
             }
             return;
         }
@@ -73,8 +78,13 @@ public class SensorsABTestApiRequestHelper<T> {
         if (context != null && !NetworkUtils.isNetworkAvailable(context)) {
             if (!mHasCallback) {
                 SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_NETWORK_UNAVAILABLE, defaultValue);
-                callBack.onResult(defaultValue);
                 mHasCallback = true;
+                TaskRunner.getUiThreadHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        callBack.onResult(defaultValue);
+                    }
+                });
             }
             return;
         }

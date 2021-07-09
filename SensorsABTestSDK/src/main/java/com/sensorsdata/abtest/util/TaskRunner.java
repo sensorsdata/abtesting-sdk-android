@@ -19,12 +19,14 @@ package com.sensorsdata.abtest.util;
 
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 
 
 public class TaskRunner {
     private static final String TAG = "SAB.TaskRunner";
 
     private Handler mBackHandler;
+    private Handler mUiThreadHandler;
 
     private static class SingletonHolder {
         static TaskRunner sRunner = new TaskRunner();
@@ -39,6 +41,15 @@ public class TaskRunner {
             SingletonHolder.sRunner.mBackHandler = backHandler;
         }
         return backHandler;
+    }
+
+    public static synchronized Handler getUiThreadHandler() {
+        Handler uiHandler = SingletonHolder.sRunner.mUiThreadHandler;
+        if (uiHandler == null) {
+            uiHandler = new Handler(Looper.getMainLooper());
+            SingletonHolder.sRunner.mUiThreadHandler = uiHandler;
+        }
+        return uiHandler;
     }
 }
 

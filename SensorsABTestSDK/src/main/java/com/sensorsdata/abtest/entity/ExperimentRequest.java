@@ -27,8 +27,15 @@ import com.sensorsdata.analytics.android.sdk.util.JSONUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.Iterator;
+
 public class ExperimentRequest {
     private static final String TAG = "SAB.RequestParams";
+    private JSONObject mJSONObject;
+
+    public ExperimentRequest(JSONObject jsonObject) {
+        this.mJSONObject = jsonObject;
+    }
 
     public JSONObject createRequestBody() {
         JSONObject jsonObject = new JSONObject();
@@ -41,7 +48,20 @@ public class ExperimentRequest {
             jsonObject.put("platform", "Android");
             jsonObject.put("properties", getPresetProperties());
             jsonObject.put("abtest_lib_version", BuildConfig.SDK_VERSION);
-
+            try {
+                if (mJSONObject != null) {
+                    Iterator<String> iterator = mJSONObject.keys();
+                    while (iterator.hasNext()) {
+                        String key = iterator.next();
+                        String value = mJSONObject.optString(key);
+                        if (!TextUtils.isEmpty(key)) {
+                            jsonObject.put(key, value);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                SALog.printStackTrace(e);
+            }
             SALog.i(TAG, "getRequestParams | request:\n" + JSONUtils.formatJson(jsonObject.toString()));
         } catch (JSONException e) {
             SALog.printStackTrace(e);

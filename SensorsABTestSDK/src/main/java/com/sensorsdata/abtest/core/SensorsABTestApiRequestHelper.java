@@ -169,6 +169,10 @@ public class SensorsABTestApiRequestHelper<T> {
     }
 
     void requestExperiments(final IApiCallback<String> callBack) {
+        requestExperiments(null, callBack);
+    }
+
+    void requestExperiments(JSONObject object, final IApiCallback<String> callBack) {
         String url = null, key = null;
         SensorsABTestConfigOptions configOptions = SensorsABTest.shareInstance().getConfigOptions();
         if (configOptions != null) {
@@ -189,7 +193,7 @@ public class SensorsABTestApiRequestHelper<T> {
         headers.put("project-key", key);
         new RequestHelper.Builder(HttpMethod.POST, url)
                 .header(headers)
-                .jsonData(new ExperimentRequest().createRequestBody().toString())
+                .jsonData(new ExperimentRequest(object).createRequestBody().toString())
                 .callback(new HttpCallback.StringCallback() {
                     @Override
                     public void onFailure(final int code, final String errorMessage) {

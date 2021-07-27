@@ -137,7 +137,6 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
                         }
                     }
                 }
-                SALog.i(TAG, "saveExperiments2MemoryCache | experiments:\n" + JSONUtils.formatJson(hashMap.toString()));
             }
         } catch (Exception e) {
             SALog.printStackTrace(e);

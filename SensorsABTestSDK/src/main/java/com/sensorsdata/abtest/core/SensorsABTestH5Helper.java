@@ -24,6 +24,7 @@ import android.view.View;
 import com.sensorsdata.abtest.entity.AppConstants;
 import com.sensorsdata.abtest.entity.H5Request;
 import com.sensorsdata.analytics.android.sdk.SALog;
+import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -66,7 +67,8 @@ class SensorsABTestH5Helper implements WebViewJavascriptBridge {
                 JSONObject data = jsonObject.optJSONObject("data");
                 if (data != null) {
                     request.messageId = data.optString("message_id");
-                    new SensorsABTestApiRequestHelper<>().requestExperiments(new IApiCallback<String>() {
+                    final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
+                    new SensorsABTestApiRequestHelper<>().requestExperiments(data.optJSONObject("request_body"), new IApiCallback<String>() {
                         @Override
                         public void onSuccess(String s) {
                             if (TextUtils.isEmpty(s)) {
@@ -90,7 +92,13 @@ class SensorsABTestH5Helper implements WebViewJavascriptBridge {
                                 JSONArray array = originObject.optJSONArray("results");
                                 String status = originObject.optString("status");
                                 if (TextUtils.equals(AppConstants.AB_TEST_SUCCESS, status)) {
-                                    SensorsABTestCacheManager.getInstance().loadExperimentsFromCache(array != null ? array.toString() : "");
+                                    JSONObject obj = null;
+                                    if (array != null) {
+                                        obj = new JSONObject();
+                                        obj.put("experiments", array);
+                                        obj.put("distinct_id", distinctId);
+                                    }
+                                    SensorsABTestCacheManager.getInstance().loadExperimentsFromCache(obj != null ? obj.toString() : "");
                                 }
                             } catch (JSONException e) {
                                 SALog.printStackTrace(e);

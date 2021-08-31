@@ -17,9 +17,17 @@ public class AlarmManagerUtils {
     private static AlarmManagerUtils instance = null;
 
     private AlarmManagerUtils(Context context) {
-        mAlarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, GlobalLoopService.class);
-        mPendingIntent = PendingIntent.getService(context, 0, intent, 0);
+        try {
+            mAlarm = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(context, GlobalLoopService.class);
+            int flag = 0;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                flag = PendingIntent.FLAG_IMMUTABLE;
+            }
+            mPendingIntent = PendingIntent.getService(context, 0, intent, flag);
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
+        }
     }
 
     public static AlarmManagerUtils getInstance(Context context) {

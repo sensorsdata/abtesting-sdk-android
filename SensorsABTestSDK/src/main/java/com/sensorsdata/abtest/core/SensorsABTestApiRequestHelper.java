@@ -19,6 +19,7 @@ package com.sensorsdata.abtest.core;
 
 
 import android.content.Context;
+import android.os.Looper;
 import android.text.TextUtils;
 
 import com.sensorsdata.abtest.OnABTestReceivedData;
@@ -63,12 +64,7 @@ public class SensorsABTestApiRequestHelper<T> {
             if (!mHasCallback) {
                 SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_NULL_EXPERIMENT_PARAMETER_NAME, defaultValue);
                 mHasCallback = true;
-                TaskRunner.getUiThreadHandler().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callBack.onResult(defaultValue);
-                    }
-                });
+                doCallbackOnMainThread(callBack, defaultValue);
             }
             return;
         }
@@ -79,12 +75,7 @@ public class SensorsABTestApiRequestHelper<T> {
             if (!mHasCallback) {
                 SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_NETWORK_UNAVAILABLE, defaultValue);
                 mHasCallback = true;
-                TaskRunner.getUiThreadHandler().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callBack.onResult(defaultValue);
-                    }
-                });
+                doCallbackOnMainThread(callBack, defaultValue);
             }
             return;
         }
@@ -102,7 +93,7 @@ public class SensorsABTestApiRequestHelper<T> {
                     if (experimentMap == null) {
                         if (!mHasCallback) {
                             SALog.i(TAG, "onSuccess response is empty and return default value: " + defaultValue);
-                            callBack.onResult(defaultValue);
+                            doCallbackOnMainThread(callBack, defaultValue);
                             mHasCallback = true;
                         }
                         return;
@@ -112,7 +103,7 @@ public class SensorsABTestApiRequestHelper<T> {
                     if (experiment == null) {
                         if (!mHasCallback) {
                             SALog.i(TAG, "onSuccess experiment is empty and return default value: " + defaultValue);
-                            callBack.onResult(defaultValue);
+                            doCallbackOnMainThread(callBack, defaultValue);
                             mHasCallback = true;
                         }
                         return;
@@ -128,7 +119,7 @@ public class SensorsABTestApiRequestHelper<T> {
                                 }
                                 SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, paramName, variableType, defaultValue.getClass().toString());
                             }
-                            callBack.onResult(defaultValue);
+                            doCallbackOnMainThread(callBack, defaultValue);
                             mHasCallback = true;
                         }
                         return;
@@ -138,7 +129,7 @@ public class SensorsABTestApiRequestHelper<T> {
                     if (value != null) {
                         if (!mHasCallback) {
                             SALog.i(TAG, "onSuccess return value: " + value);
-                            callBack.onResult(value);
+                            doCallbackOnMainThread(callBack, value);
                             mHasCallback = true;
                         } else {
                             SALog.i(TAG, "mOnABTestReceivedData is null ");
@@ -150,7 +141,7 @@ public class SensorsABTestApiRequestHelper<T> {
                 } catch (Exception e) {
                     if (!mHasCallback) {
                         SALog.i(TAG, "onSuccess Exception and return default value: " + defaultValue);
-                        callBack.onResult(defaultValue);
+                        doCallbackOnMainThread(callBack, defaultValue);
                         mHasCallback = true;
                     }
                 }
@@ -161,7 +152,7 @@ public class SensorsABTestApiRequestHelper<T> {
                 TaskRunner.getBackHandler().removeCallbacks(runnable);
                 if (!mHasCallback) {
                     SALog.i(TAG, "onFailure and return default value: " + defaultValue);
-                    callBack.onResult(defaultValue);
+                    doCallbackOnMainThread(callBack, defaultValue);
                     mHasCallback = true;
                 }
             }
@@ -263,6 +254,19 @@ public class SensorsABTestApiRequestHelper<T> {
         });
     }
 
+    private void doCallbackOnMainThread(final OnABTestReceivedData<T> callback, final T value) {
+        if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
+            callback.onResult(value);
+        } else {
+            TaskRunner.getUiThreadHandler().post(new Runnable() {
+                @Override
+                public void run() {
+                    callback.onResult(value);
+                }
+            });
+        }
+    }
+
     private class TimeoutRunnable implements Runnable {
 
         private T defaultValue;
@@ -278,7 +282,7 @@ public class SensorsABTestApiRequestHelper<T> {
             if (onABTestReceivedData != null && !mHasCallback) {
                 SALog.i(TAG, "timeout return value: " + defaultValue);
                 SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_TIMEOUT, defaultValue);
-                onABTestReceivedData.onResult(defaultValue);
+                doCallbackOnMainThread(onABTestReceivedData, defaultValue);
                 mHasCallback = true;
             }
         }

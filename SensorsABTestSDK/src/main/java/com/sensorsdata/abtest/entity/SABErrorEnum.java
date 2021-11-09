@@ -32,7 +32,8 @@ public enum SABErrorEnum {
     ASYNC_REQUEST_NULL_EXPERIMENT_PARAMETER_NAME("1001", "The experiment param name of async request is empty and return default value: %s"),
     ASYNC_REQUEST_NETWORK_UNAVAILABLE("1002", "Network is unavailable and return default value: %s"),
     ASYNC_REQUEST_TIMEOUT("1003", "AsyncRequest is timeout and return default value: %s"),
-    ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID("1004", "试验结果类型与代码期望类型不一致，试验参数名：%s，当前返回类型为：%s，代码期望类型为：%s");
+    ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID("1004", "试验结果类型与代码期望类型不一致，试验参数名：%s，当前返回类型为：%s，代码期望类型为：%s"),
+    ASYNC_REQUEST_PROPERTIES_NOT_VALID("1005", "请求试验的自定义参数校验不通过: %s");
 
     public String code;
     public String message;

@@ -39,8 +39,7 @@ public class MyApplication extends Application {
                 .enableTrackAppCrash()
                 .enableLog(true)
                 .enableJavaScriptBridge(true)
-                .enableVisualizedAutoTrack(true)
-                .enableVisualizedAutoTrackConfirmDialog(true);
+                .enableVisualizedAutoTrack(true);
         SensorsDataAPI.startWithConfigOptions(this, configOptions);
 
         SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://10.120.52.81:8222/api/v2/abtest/online/results?project-key=fake");

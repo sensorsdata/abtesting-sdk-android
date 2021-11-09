@@ -28,13 +28,18 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Iterator;
+import java.util.Map;
 
 public class ExperimentRequest {
     private static final String TAG = "SAB.RequestParams";
     private JSONObject mJSONObject;
+    private Map<String, String> mProperties;
+    private String mParamName;
 
-    public ExperimentRequest(JSONObject jsonObject) {
+    public ExperimentRequest(Map<String, String> properties, String paramName, JSONObject jsonObject) {
+        this.mProperties = properties;
         this.mJSONObject = jsonObject;
+        this.mParamName = paramName;
     }
 
     public JSONObject createRequestBody() {
@@ -48,6 +53,10 @@ public class ExperimentRequest {
             jsonObject.put("platform", "Android");
             jsonObject.put("properties", getPresetProperties());
             jsonObject.put("abtest_lib_version", BuildConfig.SDK_VERSION);
+            if (mProperties != null && mProperties.size() > 0 && !TextUtils.isEmpty(mParamName)) {
+                jsonObject.put("custom_properties", new JSONObject(mProperties));
+                jsonObject.put("param_name", mParamName);
+            }
             try {
                 if (mJSONObject != null) {
                     Iterator<String> iterator = mJSONObject.keys();

@@ -48,10 +48,18 @@ public class SensorsABTestEmptyImplementation extends SensorsABTest {
     }
 
     @Override
+    public <T> void asyncFetchABTest(SensorsABTestExperiment<T> experiment, OnABTestReceivedData<T> callBack) {
+    }
+
+    @Override
     public <T> void fastFetchABTest(String paramName, T defaultValue, OnABTestReceivedData<T> callBack) {
     }
 
     @Override
     public <T> void fastFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+    }
+
+    @Override
+    public <T> void fastFetchABTest(SensorsABTestExperiment<T> experiment, OnABTestReceivedData<T> callBack) {
     }
 }

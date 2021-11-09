@@ -68,7 +68,7 @@ class SensorsABTestH5Helper implements WebViewJavascriptBridge {
                 if (data != null) {
                     request.messageId = data.optString("message_id");
                     final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
-                    new SensorsABTestApiRequestHelper<>().requestExperiments(data.optJSONObject("request_body"), new IApiCallback<String>() {
+                    new SensorsABTestApiRequestHelper<>().requestExperiments(null, null, data.optJSONObject("request_body"), new IApiCallback<String>() {
                         @Override
                         public void onSuccess(String s) {
                             if (TextUtils.isEmpty(s)) {

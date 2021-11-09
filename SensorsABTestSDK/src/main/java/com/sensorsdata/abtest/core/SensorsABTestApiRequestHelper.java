@@ -29,6 +29,8 @@ import com.sensorsdata.abtest.entity.AppConstants;
 import com.sensorsdata.abtest.entity.Experiment;
 import com.sensorsdata.abtest.entity.ExperimentRequest;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
+import com.sensorsdata.abtest.exception.DataInvalidException;
+import com.sensorsdata.abtest.util.SensorsDataHelper;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.abtest.util.UrlUtil;
 import com.sensorsdata.analytics.android.sdk.SALog;
@@ -51,7 +53,9 @@ public class SensorsABTestApiRequestHelper<T> {
     private boolean mHasCallback = false;
     private String mDistinctId;
 
-    public void requestExperimentByParamName(final String distinctId, final String loginId, final String anonymousId, final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+    public void requestExperimentByParamName(final String distinctId, final String loginId, final String anonymousId,
+                                             final String paramName, final T defaultValue, Map<String, Object> properties,
+                                             final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         // callback 为 null
         if (callBack == null) {
             SALog.i(TAG, "试验 callback 不正确，试验 callback 不能为空！");
@@ -80,12 +84,27 @@ public class SensorsABTestApiRequestHelper<T> {
             return;
         }
 
+        // 自定义参数校验
+        Map<String, String> propertiesString = null;
+        if (properties != null && properties.size() > 0) {
+            try {
+                propertiesString = SensorsDataHelper.checkPropertiesAndToString(properties);
+            } catch (DataInvalidException e) {
+                if (!mHasCallback) {
+                    SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PROPERTIES_NOT_VALID, e.getMessage());
+                    mHasCallback = true;
+                    doCallbackOnMainThread(callBack, defaultValue);
+                }
+                return;
+            }
+        }
+
         // 启动定时器
         final TimeoutRunnable runnable = new TimeoutRunnable(callBack, defaultValue);
         TaskRunner.getBackHandler().postDelayed(runnable, timeoutMillSeconds);
 
         mDistinctId = distinctId;
-        requestExperimentsAndUpdateCache(new IApiCallback<Map<String, Experiment>>() {
+        requestExperimentsAndUpdateCache(propertiesString, paramName, new IApiCallback<Map<String, Experiment>>() {
             @Override
             public void onSuccess(Map<String, Experiment> experimentMap) {
                 try {
@@ -159,11 +178,11 @@ public class SensorsABTestApiRequestHelper<T> {
         });
     }
 
-    void requestExperiments(final IApiCallback<String> callBack) {
-        requestExperiments(null, callBack);
+    void requestExperiments(Map<String, String> properties, String paramName, final IApiCallback<String> callBack) {
+        requestExperiments(properties, paramName, null, callBack);
     }
 
-    void requestExperiments(JSONObject object, final IApiCallback<String> callBack) {
+    void requestExperiments(Map<String, String> properties, String paramName, JSONObject object, final IApiCallback<String> callBack) {
         String url = null, key = null;
         SensorsABTestConfigOptions configOptions = SensorsABTest.shareInstance().getConfigOptions();
         if (configOptions != null) {
@@ -184,7 +203,7 @@ public class SensorsABTestApiRequestHelper<T> {
         headers.put("project-key", key);
         new RequestHelper.Builder(HttpMethod.POST, url)
                 .header(headers)
-                .jsonData(new ExperimentRequest(object).createRequestBody().toString())
+                .jsonData(new ExperimentRequest(properties, paramName, object).createRequestBody().toString())
                 .callback(new HttpCallback.StringCallback() {
                     @Override
                     public void onFailure(final int code, final String errorMessage) {
@@ -208,11 +227,11 @@ public class SensorsABTestApiRequestHelper<T> {
     }
 
     public void requestExperimentsAndUpdateCache() {
-        requestExperimentsAndUpdateCache(null);
+        requestExperimentsAndUpdateCache(null, null, null);
     }
 
-    void requestExperimentsAndUpdateCache(final IApiCallback<Map<String, Experiment>> callBack) {
-        requestExperiments(new IApiCallback<String>() {
+    void requestExperimentsAndUpdateCache(Map<String, String> properties, String paramName, final IApiCallback<Map<String, Experiment>> callBack) {
+        requestExperiments(properties, paramName, new IApiCallback<String>() {
             @Override
             public void onSuccess(String s) {
                 try {

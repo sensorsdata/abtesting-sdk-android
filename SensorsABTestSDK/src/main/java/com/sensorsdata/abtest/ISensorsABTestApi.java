@@ -51,6 +51,15 @@ interface ISensorsABTestApi {
     <T> void asyncFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack);
 
     /**
+     * 始终从网络请求试验结果，可自定义属性和超时时间
+     *
+     * @param experiment 试验参数
+     * @param callBack 接口回调
+     * @param <T> 默认值类型
+     */
+    <T> void asyncFetchABTest(SensorsABTestExperiment<T> experiment, OnABTestReceivedData<T> callBack);
+
+    /**
      * 如果本地有缓存，则返回缓存数据；否则从网络请求最新的试验数据，默认 30s 超时时间
      *
      * @param paramName 参数名
@@ -70,4 +79,13 @@ interface ISensorsABTestApi {
      * @param <T> 默认值类型
      */
     <T> void fastFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack);
+
+    /**
+     * 如果本地有缓存，则返回缓存数据；否则从网络请求最新的试验数据。可自定义属性和超时时间
+     *
+     * @param experiment 试验参数
+     * @param callBack 接口回调
+     * @param <T> 默认值类型
+     */
+    <T> void fastFetchABTest(SensorsABTestExperiment<T> experiment, OnABTestReceivedData<T> callBack);
 }

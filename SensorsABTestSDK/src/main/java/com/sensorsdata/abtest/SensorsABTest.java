@@ -21,10 +21,10 @@ import android.content.Context;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.sensorsdata.abtest.core.SensorsABTestHelper;
 import com.sensorsdata.abtest.core.SABErrorDispatcher;
 import com.sensorsdata.abtest.core.SensorsABTestApiRequestHelper;
 import com.sensorsdata.abtest.core.SensorsABTestCacheManager;
+import com.sensorsdata.abtest.core.SensorsABTestHelper;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.util.AppInfoUtils;
 import com.sensorsdata.abtest.util.TaskRunner;
@@ -34,13 +34,14 @@ import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.TrackTaskManager;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 
 public class SensorsABTest implements ISensorsABTestApi {
 
     private static final String TAG = "SAB.SensorsABTest";
     private static SensorsABTest sInstance;
     // 默认请求超时时间
-    private static final int TIMEOUT_REQUEST = 30 * 1000;
+    protected static final int TIMEOUT_REQUEST = 30 * 1000;
     private SensorsABTestConfigOptions mConfigOptions;
     private Context mContext;
 
@@ -139,20 +140,48 @@ public class SensorsABTest implements ISensorsABTestApi {
 
     @Override
     public <T> void asyncFetchABTest(String paramName, T defaultValue, OnABTestReceivedData<T> callBack) {
-        try {
-            asyncFetchABTest(paramName, defaultValue, TIMEOUT_REQUEST, callBack);
-        } catch (Exception e) {
-            SALog.printStackTrace(e);
-        }
+        asyncFetchABTestInner(paramName, defaultValue, null, TIMEOUT_REQUEST, callBack);
     }
 
     @Override
-    public <T> void asyncFetchABTest(final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+    public <T> void asyncFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+        asyncFetchABTestInner(paramName, defaultValue, null, timeoutMillSeconds, callBack);
+    }
+
+    @Override
+    public <T> void asyncFetchABTest(SensorsABTestExperiment<T> experiment, OnABTestReceivedData<T> callBack) {
+        if (experiment == null) {
+            SALog.i(TAG, "experiment is null, check your param please!");
+            return;
+        }
+        asyncFetchABTestInner(experiment.paramName, experiment.defaultValue, experiment.properties, experiment.timeoutMillSeconds, callBack);
+    }
+
+    @Override
+    public <T> void fastFetchABTest(String paramName, T defaultValue, OnABTestReceivedData<T> callBack) {
+        fastFetchABTestInner(paramName, defaultValue, null, TIMEOUT_REQUEST, callBack);
+    }
+
+    @Override
+    public <T> void fastFetchABTest(String paramName, T defaultValue, int timeoutMillSeconds, OnABTestReceivedData<T> callBack) {
+        fastFetchABTestInner(paramName, defaultValue, null, timeoutMillSeconds, callBack);
+    }
+
+    @Override
+    public <T> void fastFetchABTest(SensorsABTestExperiment<T> experiment, OnABTestReceivedData<T> callBack) {
+        if (experiment == null) {
+            SALog.i(TAG, "experiment is null, check your param please!");
+            return;
+        }
+        fastFetchABTestInner(experiment.paramName, experiment.defaultValue, experiment.properties, experiment.timeoutMillSeconds, callBack);
+    }
+
+    private <T> void asyncFetchABTestInner(final String paramName, final T defaultValue, final Map<String, Object> properties, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         try {
             addTrackEventTask(new Runnable() {
                 @Override
                 public void run() {
-                    asyncFetchABTestInner(paramName, defaultValue, timeoutMillSeconds, callBack);
+                    requestExperimentWithParams(paramName, defaultValue, properties, timeoutMillSeconds, callBack);
                 }
             });
         } catch (Exception e) {
@@ -160,36 +189,7 @@ public class SensorsABTest implements ISensorsABTestApi {
         }
     }
 
-    private <T> void asyncFetchABTestInner(final String paramName, final T defaultValue, int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
-        try {
-            if (timeoutMillSeconds > 0) {
-                SALog.i(TAG, "timeoutMillSeconds minimum value is 1000ms");
-                timeoutMillSeconds = Math.max(1000, timeoutMillSeconds);
-            } else {
-                SALog.i(TAG, "timeoutMillSeconds params is not valid: <= 0 and set default value: " + TIMEOUT_REQUEST);
-                timeoutMillSeconds = TIMEOUT_REQUEST;
-            }
-            SALog.i(TAG, "asyncFetchABTest request param name: " + paramName + ",default value: " + defaultValue + ",timeoutMillSeconds: " + timeoutMillSeconds);
-            final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
-            final String loginId = SensorsDataAPI.sharedInstance().getLoginId();
-            final String anonymousId = SensorsDataAPI.sharedInstance().getAnonymousId();
-            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, loginId, anonymousId, paramName, defaultValue, timeoutMillSeconds, callBack);
-        } catch (Exception e) {
-            SALog.printStackTrace(e);
-        }
-    }
-
-    @Override
-    public <T> void fastFetchABTest(String paramName, T defaultValue, OnABTestReceivedData<T> callBack) {
-        try {
-            fastFetchABTest(paramName, defaultValue, TIMEOUT_REQUEST, callBack);
-        } catch (Exception e) {
-            SALog.printStackTrace(e);
-        }
-    }
-
-    @Override
-    public <T> void fastFetchABTest(final String paramName, final T defaultValue, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+    private <T> void fastFetchABTestInner(final String paramName, final T defaultValue, final Map<String, Object> properties, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         try {
             addTrackEventTask(new Runnable() {
                 @Override
@@ -204,13 +204,32 @@ public class SensorsABTest implements ISensorsABTestApi {
                                 }
                             });
                         } else {
-                            asyncFetchABTestInner(paramName, defaultValue, timeoutMillSeconds, callBack);
+                            requestExperimentWithParams(paramName, defaultValue, properties, timeoutMillSeconds, callBack);
                         }
                     } catch (Exception e) {
                         SALog.printStackTrace(e);
                     }
                 }
             });
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
+        }
+    }
+
+    private <T> void requestExperimentWithParams(final String paramName, final T defaultValue, Map<String, Object> properties, int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+        try {
+            if (timeoutMillSeconds > 0) {
+                SALog.i(TAG, "timeoutMillSeconds minimum value is 1000ms");
+                timeoutMillSeconds = Math.max(1000, timeoutMillSeconds);
+            } else {
+                SALog.i(TAG, "timeoutMillSeconds params is not valid: <= 0 and set default value: " + TIMEOUT_REQUEST);
+                timeoutMillSeconds = TIMEOUT_REQUEST;
+            }
+            SALog.i(TAG, "asyncFetchABTest request param name: " + paramName + ",default value: " + defaultValue + ",timeoutMillSeconds: " + timeoutMillSeconds);
+            final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
+            final String loginId = SensorsDataAPI.sharedInstance().getLoginId();
+            final String anonymousId = SensorsDataAPI.sharedInstance().getAnonymousId();
+            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, loginId, anonymousId, paramName, defaultValue, properties, timeoutMillSeconds, callBack);
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }

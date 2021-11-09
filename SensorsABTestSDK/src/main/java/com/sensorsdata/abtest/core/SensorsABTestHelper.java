@@ -92,7 +92,7 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
                     mCountDownTimer = new CountDownTimer(120 * 1000, 30 * 1000) {
                         @Override
                         public void onTick(long l) {
-                            new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache(new IApiCallback<Map<String, Experiment>>() {
+                            new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache(null, null, new IApiCallback<Map<String, Experiment>>() {
                                 @Override
                                 public void onSuccess(Map<String, Experiment> stringExperimentMap) {
                                     cancelTimer();

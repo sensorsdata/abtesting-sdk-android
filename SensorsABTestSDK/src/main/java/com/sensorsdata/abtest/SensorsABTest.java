@@ -181,7 +181,7 @@ public class SensorsABTest implements ISensorsABTestApi {
             addTrackEventTask(new Runnable() {
                 @Override
                 public void run() {
-                    requestExperimentWithParams(paramName, defaultValue, properties, timeoutMillSeconds, callBack);
+                    requestExperimentWithParams(paramName, defaultValue, properties, timeoutMillSeconds, callBack, false);
                 }
             });
         } catch (Exception e) {
@@ -204,7 +204,7 @@ public class SensorsABTest implements ISensorsABTestApi {
                                 }
                             });
                         } else {
-                            requestExperimentWithParams(paramName, defaultValue, properties, timeoutMillSeconds, callBack);
+                            requestExperimentWithParams(paramName, defaultValue, properties, timeoutMillSeconds, callBack, true);
                         }
                     } catch (Exception e) {
                         SALog.printStackTrace(e);
@@ -216,7 +216,7 @@ public class SensorsABTest implements ISensorsABTestApi {
         }
     }
 
-    private <T> void requestExperimentWithParams(final String paramName, final T defaultValue, Map<String, Object> properties, int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
+    private <T> void requestExperimentWithParams(final String paramName, final T defaultValue, Map<String, Object> properties, int timeoutMillSeconds, final OnABTestReceivedData<T> callBack, boolean mergeRequest) {
         try {
             if (timeoutMillSeconds > 0) {
                 SALog.i(TAG, "timeoutMillSeconds minimum value is 1000ms");
@@ -229,7 +229,7 @@ public class SensorsABTest implements ISensorsABTestApi {
             final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
             final String loginId = SensorsDataAPI.sharedInstance().getLoginId();
             final String anonymousId = SensorsDataAPI.sharedInstance().getAnonymousId();
-            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, loginId, anonymousId, paramName, defaultValue, properties, timeoutMillSeconds, callBack);
+            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, loginId, anonymousId, paramName, defaultValue, properties, timeoutMillSeconds, callBack, mergeRequest);
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }

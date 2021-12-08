@@ -39,13 +39,14 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
     private static final String TAG = "SAB.SensorsABTestCacheManager";
     public ConcurrentHashMap<String, Experiment> mHashMap;
     private static final String KEY_EXPERIMENT = "key_experiment_with_distinct_id";
+    private JSONArray mFuzzyExperiments = null;
 
     private SensorsABTestCacheManager() {
         mHashMap = new ConcurrentHashMap<>();
     }
 
     private static class SensorsABTestCacheManagerStaticNestedClass {
-        private static SensorsABTestCacheManager INSTANCE = new SensorsABTestCacheManager();
+        private static final SensorsABTestCacheManager INSTANCE = new SensorsABTestCacheManager();
     }
 
     public static SensorsABTestCacheManager getInstance() {
@@ -155,6 +156,7 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
      */
     void clearCache() {
         loadExperimentsFromCache("");
+        mFuzzyExperiments = null;
     }
 
     /**
@@ -208,5 +210,28 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
         }
         SALog.i(TAG, "getExperimentVariableValue return null");
         return null;
+    }
+
+    @Override
+    public void saveFuzzyExperiments(JSONArray fuzzyExperiments) {
+        mFuzzyExperiments = fuzzyExperiments;
+    }
+
+    @Override
+    public boolean isFuzzyExperiments(String experimentName) {
+        if (mFuzzyExperiments == null) {
+            return true;
+        }
+        int fuzzyExperimentsSize = mFuzzyExperiments.length();
+        for (int index = 0; index < fuzzyExperimentsSize; index++) {
+            try {
+                if (experimentName.equals(mFuzzyExperiments.getString(index))) {
+                    return true;
+                }
+            } catch (Exception e) {
+                SALog.printStackTrace(e);
+            }
+        }
+        return false;
     }
 }

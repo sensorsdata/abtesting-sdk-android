@@ -20,6 +20,8 @@ package com.sensorsdata.abtest.core;
 
 import com.sensorsdata.abtest.entity.Experiment;
 
+import org.json.JSONArray;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 interface IExperimentCacheAPI {
@@ -60,4 +62,18 @@ interface IExperimentCacheAPI {
      * @return 试验实体
      */
     <T> T getExperimentVariableValue(String paramName, T defaultValue);
+
+    /**
+     * 内存缓存不确定试验状态的试验
+     *
+     * @param fuzzyExperiments 不确定试验状态的试验
+     */
+    void saveFuzzyExperiments(JSONArray fuzzyExperiments);
+
+    /**
+     * 判断是否是不确定状态的试验
+     *
+     * @return 是否是不确定状态的试验
+     */
+    boolean isFuzzyExperiments(String experimentName);
 }

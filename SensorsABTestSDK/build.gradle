@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'signing'
 apply plugin: 'maven-publish'
 
-version = "0.1.1"
+version = "0.1.2"
 android {
     compileSdkVersion 29
 
@@ -48,6 +48,19 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     compileOnly 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:6.0.0'
+}
+
+afterEvaluate {
+    assembleRelease {
+        doLast {
+            copy {
+                def rootPath = getProjectDir().getAbsolutePath()
+                from(rootPath + '/build/outputs/aar/')
+                into(rootPath + '/build/outputs/aar/')
+                rename('SensorsABTestSDK-release.aar', 'SensorsABTestSDK-' + version + '.aar')
+            }
+        }
+    }
 }
 
 task sourceJar(type: Jar) {

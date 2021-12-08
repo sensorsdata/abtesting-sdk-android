@@ -182,7 +182,11 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
     @Override
     public void identify() {
         SALog.i(TAG, "identify");
-        onDistinctIdChanged();
+        if (TextUtils.isEmpty(SensorsDataAPI.sharedInstance().getLoginId())) {
+            onDistinctIdChanged();
+        } else {
+            SALog.i(TAG, "User has login, no need change!");
+        }
     }
 
     @Override

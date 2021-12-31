@@ -18,6 +18,7 @@
 package com.sensorsdata.abtest.core;
 
 import com.sensorsdata.abtest.OnABTestReceivedData;
+import com.sensorsdata.abtest.entity.RequestingExperimentInfo;
 import com.sensorsdata.analytics.android.sdk.SALog;
 
 import java.util.LinkedList;
@@ -39,22 +40,20 @@ public class RequestExperimentTaskRecorderManager {
         return SingleHolder.INSTANCE;
     }
 
-    @SuppressWarnings("unchecked")
     synchronized <T> RequestExperimentTaskRecorder createRequest(String loginId, String anonymousId, String paramName,
                                                                  Map<String, Object> properties, int timeoutMillSeconds,
                                                                  OnABTestReceivedData<T> onABTestReceivedData, T defaultValue) {
         SALog.i(TAG, "create new request task");
         RequestExperimentTaskRecorder currentTask = new RequestExperimentTaskRecorder(loginId, anonymousId, paramName, properties, timeoutMillSeconds);
         mTaskList.add(currentTask);
-        currentTask.putCallbackAndDefaultValue((OnABTestReceivedData<Object>) onABTestReceivedData, defaultValue);
+        currentTask.addRequestingExperimentInfo(new RequestingExperimentInfo(onABTestReceivedData, paramName, defaultValue));
         currentTask.setIsMergedTask(false);
         return currentTask;
     }
 
-    @SuppressWarnings("unchecked")
     synchronized <T> RequestExperimentTaskRecorder mergeRequest(String loginId, String anonymousId, String paramName,
                                                                 Map<String, Object> properties, int timeoutMillSeconds,
-                                                                OnABTestReceivedData<?> onABTestReceivedData, T defaultValue) {
+                                                                OnABTestReceivedData<T> onABTestReceivedData, T defaultValue) {
         boolean isTaskExist = false;
         RequestExperimentTaskRecorder currentTask = null;
         for (RequestExperimentTaskRecorder task : mTaskList) {
@@ -70,7 +69,7 @@ public class RequestExperimentTaskRecorderManager {
             isTaskExist = false;
         }
         SALog.i(TAG, "create new request task if not exist, task is exist = " + isTaskExist);
-        currentTask.putCallbackAndDefaultValue((OnABTestReceivedData<Object>) onABTestReceivedData, defaultValue);
+        currentTask.addRequestingExperimentInfo(new RequestingExperimentInfo(onABTestReceivedData, paramName, defaultValue));
         currentTask.setIsMergedTask(isTaskExist);
         return currentTask;
     }

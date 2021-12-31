@@ -3,6 +3,7 @@ package com.sensorsdata.sensorsabtest;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
 import android.view.View;
 import android.widget.AdapterView;
@@ -17,8 +18,11 @@ import com.sensorsdata.abtest.SensorsABTest;
 import com.sensorsdata.abtest.core.SensorsABTestCacheManager;
 import com.sensorsdata.abtest.entity.Experiment;
 import com.sensorsdata.abtest.util.SPUtils;
+import com.sensorsdata.analytics.android.sdk.PropertyBuilder;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.util.SensorsDataUtils;
+
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -46,6 +50,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.bt_login).setOnClickListener(this);
         findViewById(R.id.bt_h5).setOnClickListener(this);
         findViewById(R.id.bt_distinct_id).setOnClickListener(this);
+        findViewById(R.id.clear_cache).setOnClickListener(this);
+        findViewById(R.id.clear_screen).setOnClickListener(this);
         mSpinner = findViewById(R.id.spinner_experiment_id);
         mTypeSpinner = findViewById(R.id.spinner_type);
         mDefaultValueSpinner = findViewById(R.id.spinner_default_value);
@@ -56,7 +62,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initExperimentId() {
-        String experiments = SPUtils.getInstance().getString("key_experiment");
+        String experiments = SPUtils.getInstance().getString("key_experiment_with_distinct_id", "");
         ConcurrentHashMap<String, Experiment> experimentConcurrentHashMap = SensorsABTestCacheManager.getInstance().getExperimentsFromMemoryCache(experiments);
         Set<String> experimentIds = experimentConcurrentHashMap.keySet();
         Iterator<String> iterator = experimentIds.iterator();
@@ -111,6 +117,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case "boolean":
                 mAdapter = new ArrayAdapter<Object>(this, android.R.layout.simple_spinner_item, new Boolean[]{false, true});
                 break;
+            case "json":
+                mAdapter = new ArrayAdapter<Object>(this, android.R.layout.simple_spinner_item, new JSONObject[]{PropertyBuilder.newInstance().append("age", "1").toJSONObject()});
+                break;
         }
         mAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mDefaultValueSpinner.setAdapter(mAdapter);
@@ -158,6 +167,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
             case R.id.bt_login:
                 SensorsDataAPI.sharedInstance().login("login_test");
+                break;
+            case R.id.clear_screen:
+                mTextView.setText("");
+                mTextView.scrollTo(0, 0);
+                lineIndex = 1;
+                break;
+            case R.id.clear_cache:
+                SensorsABTestCacheManager.getInstance().loadExperimentsFromCache("");
+                SensorsABTestCacheManager.getInstance().saveFuzzyExperiments(null);
                 break;
         }
     }
@@ -221,15 +239,47 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 boolean result = (Boolean) SensorsABTest.shareInstance().fetchCacheABTest(mExperimentId, mExperimentDefaultValue);
                 refreshLogView("FetchCacheABTest: " + result);
             }
+        } else if (mExperimentDefaultValue instanceof JSONObject) {
+            if (invokeEnum == InvokeEnum.AsyncFetchABTest) {
+                SensorsABTest.shareInstance().asyncFetchABTest(mExperimentId, (JSONObject) mExperimentDefaultValue, timeoutMillseconds, new OnABTestReceivedData<JSONObject>() {
+                    @Override
+                    public void onResult(JSONObject result) {
+                        refreshLogView("asyncFetchABTest: " + result);
+                    }
+                });
+            } else if (invokeEnum == InvokeEnum.FastFetchABTest) {
+                SensorsABTest.shareInstance().fastFetchABTest(mExperimentId, (JSONObject) mExperimentDefaultValue, timeoutMillseconds, new OnABTestReceivedData<JSONObject>() {
+                    @Override
+                    public void onResult(JSONObject result) {
+                        refreshLogView("fastFetchABTest: " + result);
+                    }
+                });
+            } else if (invokeEnum == InvokeEnum.FetchCacheABTest) {
+                JSONObject result = (JSONObject) SensorsABTest.shareInstance().fetchCacheABTest(mExperimentId, mExperimentDefaultValue);
+                refreshLogView("FetchCacheABTest: " + result);
+            }
         }
     }
 
+    private int lineIndex = 1;
+
     private void refreshLogView(String msg) {
-        mTextView.append(msg + "\n");
-        int offset = mTextView.getLineCount() * mTextView.getLineHeight();
-        if (offset > mTextView.getHeight()) {
-            mTextView.scrollTo(0, offset - mTextView.getHeight() + mTextView.getLineHeight() * 2);
+        String text = "";
+        if (TextUtils.isEmpty(mTextView.getText())) {
+            text += (lineIndex++) + "." + msg;
+        } else {
+            text += "\n" + (lineIndex++) + "." + msg;
         }
+        mTextView.append(text);
+        mTextView.post(new Runnable() {
+            @Override
+            public void run() {
+                if (mTextView.canScrollVertically(1)) {
+                    mTextView.scrollBy(0, 1);
+                    mTextView.post(this);
+                }
+            }
+        });
     }
 
     enum InvokeEnum {

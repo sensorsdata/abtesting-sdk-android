@@ -28,6 +28,7 @@ import com.sensorsdata.abtest.SensorsABTestConfigOptions;
 import com.sensorsdata.abtest.entity.AppConstants;
 import com.sensorsdata.abtest.entity.Experiment;
 import com.sensorsdata.abtest.entity.ExperimentRequest;
+import com.sensorsdata.abtest.entity.RequestingExperimentInfo;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.exception.DataInvalidException;
 import com.sensorsdata.abtest.util.SensorsDataHelper;
@@ -43,7 +44,9 @@ import com.sensorsdata.analytics.android.sdk.util.NetworkUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -122,7 +125,7 @@ public class SensorsABTestApiRequestHelper<T> {
         }
 
         // 启动定时器
-        final TimeoutRunnable runnable = new TimeoutRunnable(currentTask, defaultValue);
+        final TimeoutRunnable runnable = new TimeoutRunnable(currentTask);
         TaskRunner.getBackHandler().postDelayed(runnable, timeoutMillSeconds);
 
         mDistinctId = distinctId;
@@ -130,64 +133,56 @@ public class SensorsABTestApiRequestHelper<T> {
             @Override
             public void onSuccess(Map<String, Experiment> experimentMap) {
                 RequestExperimentTaskRecorderManager.getInstance().removeTask(currentTask);
-                Map<OnABTestReceivedData<Object>, Object> callbackAndDefaultValueMap = currentTask.getCallbacksAndDefaultValueMap();
-                try {
-                    TaskRunner.getBackHandler().removeCallbacks(runnable);
-                    if (experimentMap == null) {
-                        if (!mHasCallback) {
-                            SALog.i(TAG, "onSuccess response is empty and return default value: " + defaultValue);
-                            doCallbackOnMainThread(callbackAndDefaultValueMap, null);
-                            mHasCallback = true;
+                List<RequestingExperimentInfo> taskExperimentInfoList = currentTask.getRequestingExperimentList();
+                TaskRunner.getBackHandler().removeCallbacks(runnable);
+                if (mHasCallback) {
+                    SALog.i(TAG, "Request success! but all callbacks has been returned with default value!");
+                    return;
+                }
+                SALog.i(TAG, "Task merged request size is " + taskExperimentInfoList.size());
+                for (RequestingExperimentInfo item : taskExperimentInfoList) {
+                    OnABTestReceivedData<?> onABTestReceivedData = item.getResultCallBack();
+                    String itemParamName = item.getParamName();
+                    Object itemDefaultValue = item.getDefaultValue();
+                    try {
+                        if (experimentMap == null) {
+                            SALog.i(TAG, "onSuccess response is empty and return default value: " + itemDefaultValue);
+                            doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                            continue;
                         }
-                        return;
-                    }
-
-                    Experiment experiment = experimentMap.get(paramName);
-                    if (experiment == null) {
-                        if (!mHasCallback) {
-                            SALog.i(TAG, "onSuccess experiment is empty and return default value: " + defaultValue);
-                            doCallbackOnMainThread(callbackAndDefaultValueMap, null);
-                            mHasCallback = true;
+                        Experiment experiment = experimentMap.get(itemParamName);
+                        if (experiment == null) {
+                            SALog.i(TAG, "onSuccess experiment is empty and return default value: " + itemDefaultValue);
+                            doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                            continue;
                         }
-                        return;
-                    }
-
-                    if (!experiment.checkTypeIsValid(paramName, defaultValue)) {
-                        if (!mHasCallback) {
-                            if (defaultValue != null) {
+                        if (!experiment.checkTypeIsValid(itemParamName, itemDefaultValue)) {
+                            if (itemDefaultValue != null) {
                                 String variableType = "";
-                                Experiment.Variable variable = experiment.getVariableByParamName(paramName);
+                                Experiment.Variable variable = experiment.getVariableByParamName(itemParamName);
                                 if (variable != null) {
                                     variableType = variable.type;
                                 }
-                                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, paramName, variableType, defaultValue.getClass().toString());
+                                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, itemParamName, variableType, itemDefaultValue.getClass().toString());
                             }
-                            doCallbackOnMainThread(callbackAndDefaultValueMap, null);
-                            mHasCallback = true;
+                            doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                            continue;
                         }
-                        return;
-                    }
-
-                    T value = experiment.getVariableValue(paramName, defaultValue);
-                    if (value != null) {
-                        if (!mHasCallback) {
+                        Object value = experiment.getVariableValue(itemParamName, itemDefaultValue);
+                        if (value != null) {
                             SALog.i(TAG, "onSuccess return value: " + value);
-                            doCallbackOnMainThread(callbackAndDefaultValueMap, value);
-                            mHasCallback = true;
-                        } else {
-                            SALog.i(TAG, "mOnABTestReceivedData is null ");
+                            doCallbackOnMainThread(onABTestReceivedData, value);
+
+                            if (!experiment.isWhiteList) {
+                                SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, distinctId, loginId, anonymousId);
+                            }
                         }
-                        if (!experiment.isWhiteList) {
-                            SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, distinctId, loginId, anonymousId);
-                        }
-                    }
-                } catch (Exception e) {
-                    if (!mHasCallback) {
-                        SALog.i(TAG, "onSuccess Exception and return default value: " + defaultValue);
-                        doCallbackOnMainThread(callbackAndDefaultValueMap, null);
-                        mHasCallback = true;
+                    } catch (Exception e) {
+                        SALog.i(TAG, "onSuccess Exception and return default value: " + itemDefaultValue);
+                        doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
                     }
                 }
+                mHasCallback = true;
             }
 
             @Override
@@ -195,8 +190,14 @@ public class SensorsABTestApiRequestHelper<T> {
                 TaskRunner.getBackHandler().removeCallbacks(runnable);
                 RequestExperimentTaskRecorderManager.getInstance().removeTask(currentTask);
                 if (!mHasCallback) {
-                    SALog.i(TAG, "onFailure and return default value: " + defaultValue);
-                    doCallbackOnMainThread(currentTask.getCallbacksAndDefaultValueMap(), null);
+                    List<RequestingExperimentInfo> taskExperimentInfoList = currentTask.getRequestingExperimentList();
+                    SALog.i(TAG, "Task merged request size is " + taskExperimentInfoList.size());
+                    for (RequestingExperimentInfo item : taskExperimentInfoList) {
+                        OnABTestReceivedData<?> onABTestReceivedData = item.getResultCallBack();
+                        Object itemDefaultValue = item.getDefaultValue();
+                        doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                        SALog.i(TAG, "onFailure and return default value: " + itemDefaultValue);
+                    }
                     mHasCallback = true;
                 }
             }
@@ -208,13 +209,14 @@ public class SensorsABTestApiRequestHelper<T> {
     }
 
     void requestExperiments(Map<String, String> properties, String paramName, JSONObject object, final IApiCallback<String> callBack) {
-        String url = null, key = null;
+        String url = null, key = null, requestBody = null;
         SensorsABTestConfigOptions configOptions = SensorsABTest.shareInstance().getConfigOptions();
         if (configOptions != null) {
             String serverUrl = configOptions.getUrl();
             url = UrlUtil.getApiBaseUrl(serverUrl);
             key = UrlUtil.getProjectKey(serverUrl);
         }
+        requestBody = new ExperimentRequest(properties, paramName, object).createRequestBody().toString();
         if (TextUtils.isEmpty(url)) {
             SALog.i(TAG, "url is empty and request cancel");
             return;
@@ -223,12 +225,15 @@ public class SensorsABTestApiRequestHelper<T> {
             SALog.i(TAG, "key is empty and request cancel");
             return;
         }
-
+        if (TextUtils.isEmpty(requestBody)) {
+            SALog.i(TAG, "request body is empty and request cancel");
+            return;
+        }
         Map<String, String> headers = new HashMap<>();
         headers.put("project-key", key);
         new RequestHelper.Builder(HttpMethod.POST, url)
                 .header(headers)
-                .jsonData(new ExperimentRequest(properties, paramName, object).createRequestBody().toString())
+                .jsonData(requestBody)
                 .callback(new HttpCallback.StringCallback() {
                     @Override
                     public void onFailure(final int code, final String errorMessage) {
@@ -299,62 +304,49 @@ public class SensorsABTestApiRequestHelper<T> {
         });
     }
 
-    private void doCallbackOnMainThread(final OnABTestReceivedData<T> callback, final T value) {
-        if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
-            callback.onResult(value);
-        } else {
-            TaskRunner.getUiThreadHandler().post(new Runnable() {
-                @Override
-                public void run() {
-                    callback.onResult(value);
-                }
-            });
-        }
-    }
-
-    private void doCallbackOnMainThread(final Map<OnABTestReceivedData<Object>, Object> callbackAndDefaultValueMap, final Object value) {
-        if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
-            executeCallbacks(callbackAndDefaultValueMap, value);
-        } else {
-            TaskRunner.getUiThreadHandler().post(new Runnable() {
-                @Override
-                public void run() {
-                    executeCallbacks(callbackAndDefaultValueMap, value);
-                }
-            });
-        }
-    }
-
-    private void executeCallbacks(Map<OnABTestReceivedData<Object>, Object> callbackAndDefaultValueMap, Object value) {
-        SALog.i(TAG, "executeCallbacks merged size: " + callbackAndDefaultValueMap.size());
-        for (Map.Entry<OnABTestReceivedData<Object>, Object> entry : callbackAndDefaultValueMap.entrySet()) {
-            OnABTestReceivedData<Object> callback = entry.getKey();
-            Object defaultValue = entry.getValue();
-            if (value != null && value.getClass().equals(defaultValue.getClass())) {
-                callback.onResult(value);
+    private void doCallbackOnMainThread(final OnABTestReceivedData<?> callback, final Object value) {
+        try {
+            final Method method = callback.getClass().getMethod("onResult", Object.class);
+            if (Thread.currentThread() == Looper.getMainLooper().getThread()) {
+                method.invoke(callback, value);
             } else {
-                callback.onResult(defaultValue);
+                TaskRunner.getUiThreadHandler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            method.invoke(callback, value);
+                        } catch (Exception e) {
+                            SALog.printStackTrace(e);
+                        }
+                    }
+                });
             }
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
         }
     }
 
     private class TimeoutRunnable implements Runnable {
 
-        private final Object defaultValue;
         private final RequestExperimentTaskRecorder currentTask;
 
-        TimeoutRunnable(RequestExperimentTaskRecorder currentTask, Object defaultValue) {
+        TimeoutRunnable(RequestExperimentTaskRecorder currentTask) {
             this.currentTask = currentTask;
-            this.defaultValue = defaultValue;
         }
 
         @Override
         public void run() {
             RequestExperimentTaskRecorderManager.getInstance().removeTask(currentTask);
             if (currentTask != null && !mHasCallback) {
-                SALog.i(TAG, "timeout return value: " + defaultValue);
-                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_TIMEOUT, defaultValue);
-                doCallbackOnMainThread(currentTask.getCallbacksAndDefaultValueMap(), null);
+                List<RequestingExperimentInfo> taskExperimentInfoList = currentTask.getRequestingExperimentList();
+                SALog.i(TAG, "Task merged request size is " + taskExperimentInfoList.size());
+                for (RequestingExperimentInfo item : taskExperimentInfoList) {
+                    OnABTestReceivedData<?> onABTestReceivedData = item.getResultCallBack();
+                    Object itemDefaultValue = item.getDefaultValue();
+                    doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                    SALog.i(TAG, "timeout return value: " + itemDefaultValue);
+                    SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_TIMEOUT, itemDefaultValue);
+                }
                 mHasCallback = true;
             }
         }

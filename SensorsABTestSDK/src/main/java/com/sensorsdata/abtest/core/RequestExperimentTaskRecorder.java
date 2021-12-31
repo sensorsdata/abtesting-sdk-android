@@ -19,9 +19,10 @@ package com.sensorsdata.abtest.core;
 
 import android.text.TextUtils;
 
-import com.sensorsdata.abtest.OnABTestReceivedData;
+import com.sensorsdata.abtest.entity.RequestingExperimentInfo;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class RequestExperimentTaskRecorder {
@@ -30,7 +31,7 @@ public class RequestExperimentTaskRecorder {
     private final String mParamName;
     private final Map<String, Object> mProperties;
     private final int mTimeoutMillSeconds;
-    private final Map<OnABTestReceivedData<Object>, Object> mCallbacksAndDefaultValueMap = new LinkedHashMap<>();
+    private final List<RequestingExperimentInfo> mRequestingExperimentInfoList = new ArrayList<>();
     private boolean mIsMergedTask = false;
 
     RequestExperimentTaskRecorder(String loginId, String anonymousId, String paramName, Map<String, Object> properties, int timeoutMillSeconds) {
@@ -41,14 +42,12 @@ public class RequestExperimentTaskRecorder {
         this.mTimeoutMillSeconds = timeoutMillSeconds;
     }
 
-    void putCallbackAndDefaultValue(OnABTestReceivedData<Object> onABTestReceivedData, Object defaultValue) {
-        if (!this.mCallbacksAndDefaultValueMap.containsKey(onABTestReceivedData)) {
-            this.mCallbacksAndDefaultValueMap.put(onABTestReceivedData, defaultValue);
-        }
+    void addRequestingExperimentInfo(RequestingExperimentInfo requestingExperimentInfo) {
+        mRequestingExperimentInfoList.add(requestingExperimentInfo);
     }
 
-    Map<OnABTestReceivedData<Object>, Object> getCallbacksAndDefaultValueMap() {
-        return mCallbacksAndDefaultValueMap;
+    List<RequestingExperimentInfo> getRequestingExperimentList() {
+        return mRequestingExperimentInfoList;
     }
 
     boolean isSameExperimentTask(String loginId, String anonymousId, String paramName, Map<String, Object> properties, int timeoutMillSeconds) {

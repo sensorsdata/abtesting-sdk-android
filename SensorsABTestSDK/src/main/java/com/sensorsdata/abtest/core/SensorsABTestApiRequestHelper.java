@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/09.
- * Copyright 2015－2021 Sensors Data Inc.
+ * Copyright 2020－2022 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.sensorsdata.abtest.entity.ExperimentRequest;
 import com.sensorsdata.abtest.entity.RequestingExperimentInfo;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.exception.DataInvalidException;
+import com.sensorsdata.abtest.util.CommonUtils;
 import com.sensorsdata.abtest.util.SensorsDataHelper;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.abtest.util.UrlUtil;
@@ -54,7 +55,7 @@ public class SensorsABTestApiRequestHelper<T> {
 
     private static final String TAG = "SAB.SensorsABTestApiRequestHelper";
     private boolean mHasCallback = false;
-    private String mDistinctId;
+    private String mUserIdentifier;
 
     public void requestExperimentByParamName(final String distinctId, final String loginId, final String anonymousId,
                                              final String paramName, final T defaultValue, Map<String, Object> properties,
@@ -128,7 +129,7 @@ public class SensorsABTestApiRequestHelper<T> {
         final TimeoutRunnable runnable = new TimeoutRunnable(currentTask);
         TaskRunner.getBackHandler().postDelayed(runnable, timeoutMillSeconds);
 
-        mDistinctId = distinctId;
+        mUserIdentifier = CommonUtils.getCurrentUserIdentifier();
         requestExperimentsAndUpdateCache(propertiesString, paramName, new IApiCallback<Map<String, Experiment>>() {
             @Override
             public void onSuccess(Map<String, Experiment> experimentMap) {
@@ -276,7 +277,10 @@ public class SensorsABTestApiRequestHelper<T> {
                         if (array != null) {
                             object = new JSONObject();
                             object.put("experiments", array);
-                            object.put("distinct_id", mDistinctId);
+                            if (TextUtils.isEmpty(mUserIdentifier)) {
+                                mUserIdentifier = CommonUtils.getCurrentUserIdentifier();
+                            }
+                            object.put("identifier", mUserIdentifier);
                         }
                         hashMap = SensorsABTestCacheManager.getInstance().loadExperimentsFromCache(object != null ? object.toString() : "");
                         SensorsABTestCacheManager.getInstance().saveFuzzyExperiments(response.optJSONArray("fuzzy_experiments"));

@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/09.
- * Copyright 2015－2021 Sensors Data Inc.
+ * Copyright 2020－2022 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.sensorsdata.abtest.core.SensorsABTestApiRequestHelper;
 import com.sensorsdata.abtest.core.SensorsABTestCacheManager;
 import com.sensorsdata.abtest.core.SensorsABTestHelper;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
+import com.sensorsdata.abtest.store.StoreManagerFactory;
 import com.sensorsdata.abtest.util.AppInfoUtils;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.abtest.util.UrlUtil;
@@ -49,6 +50,7 @@ public class SensorsABTest implements ISensorsABTestApi {
         try {
             this.mContext = context.getApplicationContext();
             this.mConfigOptions = configOptions;
+            StoreManagerFactory.initStoreManager(mContext);
         } catch (Exception ex) {
             SALog.printStackTrace(ex);
         }

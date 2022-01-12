@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/10/28.
- * Copyright 2015－2021 Sensors Data Inc.
+ * Copyright 2020－2022 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class SensorsABTestEmptyImplementation extends SensorsABTest {
 
     @Override
     public <T> T fetchCacheABTest(String paramName, T defaultValue) {
-        return null;
+        return defaultValue;
     }
 
     @Override

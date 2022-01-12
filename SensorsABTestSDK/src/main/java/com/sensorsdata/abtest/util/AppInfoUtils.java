@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/09.
- * Copyright 2015－2021 Sensors Data Inc.
+ * Copyright 2020－2022 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,17 @@ import java.lang.reflect.Field;
 public class AppInfoUtils {
     private static final String TAG = "AppInfoUtils";
     public static final String MIN_SA_SDK_VERSION = "4.3.6";
+    public static final String MIN_SA_SECRET_SDK_VERSION = "6.2.0";
 
     public static boolean checkSASDKVersionIsValid() {
+        return checkSASDKVersionIsValid(MIN_SA_SDK_VERSION);
+    }
+
+    public static boolean checkSASecretVersionIsValid() {
+        return checkSASDKVersionIsValid(MIN_SA_SECRET_SDK_VERSION);
+    }
+
+    private static boolean checkSASDKVersionIsValid(String saVersion) {
         SensorsDataAPI sensorsDataAPI = SensorsDataAPI.sharedInstance();
         if (sensorsDataAPI instanceof SensorsDataAPIEmptyImplementation) {
             Log.e(TAG, "神策 Android 埋点 SDK 未集成或未初始化");
@@ -47,8 +56,12 @@ public class AppInfoUtils {
                 if (version.contains("-")) {
                     compareVersion = compareVersion.substring(0, compareVersion.indexOf("-"));
                 }
-                if (!AppInfoUtils.isVersionValid(compareVersion, MIN_SA_SDK_VERSION)) {
-                    Log.e(TAG, String.format("当前神策 Android 埋点 SDK 版本 %s 过低，请升级至 %s 及其以上版本后进行使用",version,MIN_SA_SDK_VERSION));
+                if (!AppInfoUtils.isVersionValid(compareVersion, saVersion)) {
+                    if (saVersion.equals(MIN_SA_SDK_VERSION)) {
+                        Log.e(TAG, String.format("当前神策 Android 埋点 SDK 版本 %s 过低，请升级至 %s 及其以上版本后进行使用", version, saVersion));
+                    } else if (saVersion.equals(MIN_SA_SECRET_SDK_VERSION)) {
+                        Log.e(TAG, String.format("Android A/B Testing 合规方案无法使用！当前埋点 SDK 版本为 %s，升级至 %s 后合规方案才能生效！", version, saVersion));
+                    }
                     return false;
                 }
             }
@@ -67,8 +80,12 @@ public class AppInfoUtils {
                 String[] saVersions = saVersion.split("\\.");
                 String[] requiredVersions = requiredVersion.split("\\.");
                 for (int index = 0; index < requiredVersions.length; index++) {
-                    if (Integer.parseInt(saVersions[index]) > Integer.parseInt(requiredVersions[index])) {
+                    int tagValue = Integer.parseInt(saVersions[index]);
+                    int desValue = Integer.parseInt(requiredVersions[index]);
+                    if (tagValue > desValue) {
                         return true;
+                    } else if (tagValue < desValue) {
+                        return false;
                     }
                 }
                 return false;

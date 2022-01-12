@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/09.
- * Copyright 2015－2021 Sensors Data Inc.
+ * Copyright 2020－2022 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import android.view.View;
 
 import com.sensorsdata.abtest.entity.Experiment;
 import com.sensorsdata.abtest.util.AlarmManagerUtils;
-import com.sensorsdata.abtest.util.SPUtils;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
@@ -47,7 +46,6 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
 
     public void init(Context context) {
         this.mContext = context;
-        SPUtils.getInstance().init(context);
         SensorsABTestCacheManager.getInstance().loadExperimentsFromDiskCache();
         SensorsDataAPI.sharedInstance().addSAJSListener(this);
         SensorsDataAPI.sharedInstance().addEventListener(this);

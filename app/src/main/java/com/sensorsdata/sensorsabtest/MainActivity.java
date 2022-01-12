@@ -17,7 +17,7 @@ import com.sensorsdata.abtest.OnABTestReceivedData;
 import com.sensorsdata.abtest.SensorsABTest;
 import com.sensorsdata.abtest.core.SensorsABTestCacheManager;
 import com.sensorsdata.abtest.entity.Experiment;
-import com.sensorsdata.abtest.util.SPUtils;
+import com.sensorsdata.abtest.store.StoreManagerFactory;
 import com.sensorsdata.analytics.android.sdk.PropertyBuilder;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.util.SensorsDataUtils;
@@ -40,7 +40,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        SPUtils.getInstance().init(this);
         setContentView(R.layout.activity_main_layout);
         findViewById(R.id.bt_fetchCacheABTest).setOnClickListener(this);
         findViewById(R.id.bt_asyncFetchABTest).setOnClickListener(this);
@@ -62,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void initExperimentId() {
-        String experiments = SPUtils.getInstance().getString("key_experiment_with_distinct_id", "");
+        String experiments = StoreManagerFactory.getStoreManager().getString("key_experiment_with_distinct_id", "");
         ConcurrentHashMap<String, Experiment> experimentConcurrentHashMap = SensorsABTestCacheManager.getInstance().getExperimentsFromMemoryCache(experiments);
         Set<String> experimentIds = experimentConcurrentHashMap.keySet();
         Iterator<String> iterator = experimentIds.iterator();

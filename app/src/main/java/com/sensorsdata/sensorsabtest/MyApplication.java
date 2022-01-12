@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/11.
- * Copyright 2015－2021 Sensors Data Inc.
+ * Copyright 2020－2022 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class MyApplication extends Application {
                 .enableVisualizedAutoTrack(true);
         SensorsDataAPI.startWithConfigOptions(this, configOptions);
 
-        SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://10.120.52.81:8222/api/v2/abtest/online/results?project-key=fake");
+        SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://10.120.77.53:8202/api/v2/abtest/online/results?project-key=985F3B7579CCBBFE389BCCC5BF39B166C61FDD04");
         SensorsABTest.startWithConfigOptions(this, abTestConfigOptions);
     }
 }

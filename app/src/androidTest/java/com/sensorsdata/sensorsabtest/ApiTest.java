@@ -285,8 +285,7 @@ public class ApiTest {
                 .enableTrackAppCrash()
                 .enableLog(true)
                 .enableJavaScriptBridge(false)
-                .enableVisualizedAutoTrack(true)
-                .enableVisualizedAutoTrackConfirmDialog(true);
+                .enableVisualizedAutoTrack(true);
         SensorsDataAPI.startWithConfigOptions(appContext, configOptions);
 
         SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://abtesting.saas.debugbox.sensorsdata.cn/api/v100/abtest/online/results?project-key=0a551836f92dc3292be545c748f3f462e2d43bc9");

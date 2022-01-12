@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/09.
- * Copyright 2015－2021 Sensors Data Inc.
+ * Copyright 2020－2022 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ import android.text.TextUtils;
 
 import com.sensorsdata.abtest.entity.Experiment;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
-import com.sensorsdata.abtest.util.SPUtils;
+import com.sensorsdata.abtest.store.StoreManagerFactory;
+import com.sensorsdata.abtest.util.CommonUtils;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.util.JSONUtils;
@@ -40,6 +41,7 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
     public ConcurrentHashMap<String, Experiment> mHashMap;
     private static final String KEY_EXPERIMENT = "key_experiment_with_distinct_id";
     private JSONArray mFuzzyExperiments = null;
+    private String mIdentifier = "";
 
     private SensorsABTestCacheManager() {
         mHashMap = new ConcurrentHashMap<>();
@@ -61,7 +63,7 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
     @Override
     public void saveExperiments2DiskCache(String result) {
         SALog.i(TAG, "更新试验数据成功:\n" + result);
-        SPUtils.getInstance().put(KEY_EXPERIMENT, result);
+        StoreManagerFactory.getStoreManager().putString(KEY_EXPERIMENT, result);
     }
 
     /**
@@ -69,7 +71,7 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
      */
     @Override
     public void loadExperimentsFromDiskCache() {
-        String experiments = SPUtils.getInstance().getString(KEY_EXPERIMENT);
+        String experiments = StoreManagerFactory.getStoreManager().getString(KEY_EXPERIMENT, "");
         SALog.i(TAG, "loadExperimentsFromDiskCache | experiments:\n" + JSONUtils.formatJson(experiments));
         getExperimentsFromMemoryCache(experiments);
     }
@@ -94,6 +96,7 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
                 return hashMap;
             }
             parseCache(experiments, hashMap);
+            mIdentifier = jsonObject.optString("identifier", "");
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }
@@ -166,7 +169,7 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
      * @return 命中的试验实体
      */
     private Experiment getExperimentByParamName(String paramName) {
-        if (paramName != null && mHashMap.containsKey(paramName)) {
+        if (paramName != null && CommonUtils.getCurrentUserIdentifier().equals(mIdentifier) && mHashMap.containsKey(paramName)) {
             return mHashMap.get(paramName);
         }
         return null;

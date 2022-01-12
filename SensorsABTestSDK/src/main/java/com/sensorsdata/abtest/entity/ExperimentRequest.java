@@ -1,6 +1,6 @@
 /*
  * Created by zhangxiangwei on 2020/09/12.
- * Copyright 2015－2021 Sensors Data Inc.
+ * Copyright 2020－2022 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,13 @@ public class ExperimentRequest {
         JSONObject jsonObject = null;
         try {
             jsonObject = SensorsDataAPI.sharedInstance().getPresetProperties();
+            // 移除掉 $device_id 和 $anonymization_id 属性
+            if (jsonObject.has("$anonymization_id")) {
+                jsonObject.remove("$anonymization_id");
+            }
+            if (jsonObject.has("$device_id")) {
+                jsonObject.remove("$device_id");
+            }
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }

@@ -50,7 +50,7 @@ class SensorsABTestTrackHelper {
         return mInstance;
     }
 
-    public void trackABTestTrigger(Experiment experiment, String distinctId, String loginId, String anonymousId) {
+    public void trackABTestTrigger(Experiment experiment, String distinctId, String loginId, String anonymousId, String customIDs) {
         if (experiment == null || TextUtils.isEmpty(experiment.experimentId)) {
             SALog.i(TAG, "trackABTestTrigger param experiment is invalid");
             return;
@@ -61,7 +61,7 @@ class SensorsABTestTrackHelper {
             return;
         }
 
-        if (!isTrackABTestTrigger(experiment.experimentId, distinctId)) {
+        if (!isTrackABTestTrigger(experiment.experimentId, distinctId + customIDs)) {
             SALog.i(TAG, "trackABTestTrigger experimentId: " + experiment.experimentId + " has triggered and return");
             return;
         }
@@ -83,7 +83,7 @@ class SensorsABTestTrackHelper {
                 jsonObject.put("$abtest_anonymous_id", anonymousId);
             }
             SensorsDataAPI.sharedInstance().track("$ABTestTrigger", jsonObject);
-            addExperimentId2HashMap(experiment.experimentId, distinctId);
+            addExperimentId2HashMap(experiment.experimentId, distinctId + customIDs);
         } catch (JSONException e) {
             SALog.printStackTrace(e);
         } catch (Exception e) {
@@ -91,10 +91,10 @@ class SensorsABTestTrackHelper {
         }
     }
 
-    private boolean isTrackABTestTrigger(String experimentId, String distinctId) {
+    private boolean isTrackABTestTrigger(String experimentId, String triggerKey) {
         try {
-            if (mABTestTriggerEventHashMap != null && mABTestTriggerEventHashMap.containsKey(distinctId)) {
-                HashSet<String> stringHashSet = mABTestTriggerEventHashMap.get(distinctId);
+            if (mABTestTriggerEventHashMap != null && mABTestTriggerEventHashMap.containsKey(triggerKey)) {
+                HashSet<String> stringHashSet = mABTestTriggerEventHashMap.get(triggerKey);
                 return stringHashSet == null || !stringHashSet.contains(experimentId);
             }
         } catch (Exception e) {
@@ -103,17 +103,17 @@ class SensorsABTestTrackHelper {
         return true;
     }
 
-    private void addExperimentId2HashMap(String experimentId, String distinctId) {
+    private void addExperimentId2HashMap(String experimentId, String triggerKey) {
         if (mABTestTriggerEventHashMap == null) {
             mABTestTriggerEventHashMap = new HashMap<>();
         }
         SALog.i(TAG, "addExperimentId2HashMap mABTestTriggerEventHashMap old: " + mABTestTriggerEventHashMap.toString());
-        HashSet<String> hashSet = mABTestTriggerEventHashMap.get(distinctId);
+        HashSet<String> hashSet = mABTestTriggerEventHashMap.get(triggerKey);
         if (hashSet == null) {
             hashSet = new HashSet<>();
         }
         hashSet.add(experimentId);
-        mABTestTriggerEventHashMap.put(distinctId, hashSet);
+        mABTestTriggerEventHashMap.put(triggerKey, hashSet);
         SALog.i(TAG, "addExperimentId2HashMap mABTestTriggerEventHashMap last: " + mABTestTriggerEventHashMap.toString());
     }
 

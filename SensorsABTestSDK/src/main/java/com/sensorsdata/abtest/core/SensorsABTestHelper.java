@@ -20,7 +20,7 @@ package com.sensorsdata.abtest.core;
 
 import android.app.Application;
 import android.content.Context;
-import android.os.CountDownTimer;
+import android.os.SystemClock;
 import android.text.TextUtils;
 import android.view.View;
 
@@ -41,15 +41,23 @@ import java.util.Map;
 public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppStateManager.AppStateChangedListener {
 
     private static final String TAG = "SensorsABTestHelper";
+    /**
+     * 初始化请求超时时间
+     */
+    private static final long REQUEST_TIMEOUT = 30 * 1000L;
+    /**
+     * 初始化请求失败的重试次数
+     */
+    private static final int REQUEST_RETRY_TIMES = 3;
     private Context mContext;
-    private CountDownTimer mCountDownTimer;
 
     public void init(Context context) {
         this.mContext = context;
         SensorsABTestCacheManager.getInstance().loadExperimentsFromDiskCache();
+        SensorsABTestCustomIdsManager.getInstance().loadCustomIds();
         SensorsDataAPI.sharedInstance().addSAJSListener(this);
         SensorsDataAPI.sharedInstance().addEventListener(this);
-        requestExperimentsAndUpdateCacheWithRetry();
+        requestExperimentsAndUpdateCacheWithRetry(REQUEST_RETRY_TIMES, 0L);
         if (context instanceof Application) {
             Application application = (Application) context;
             AppStateManager appStateManager = new AppStateManager();
@@ -81,48 +89,29 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
         AlarmManagerUtils.getInstance(mContext).cancelAlarm();
     }
 
-    private void requestExperimentsAndUpdateCacheWithRetry() {
-        TaskRunner.getBackHandler().post(new Runnable() {
+    private void requestExperimentsAndUpdateCacheWithRetry(final int retryTimes, long lastRequestTime) {
+        if (retryTimes < 0) return;
+        final long currentTime = SystemClock.elapsedRealtime();
+        long delayTime = 0L, waitTime;
+        if (lastRequestTime != 0L && (waitTime = currentTime - lastRequestTime) < REQUEST_TIMEOUT) {
+            delayTime = REQUEST_TIMEOUT - waitTime;
+        }
+        Runnable requestTask = new Runnable() {
             @Override
             public void run() {
-                cancelTimer();
-                if (mCountDownTimer == null) {
-                    mCountDownTimer = new CountDownTimer(120 * 1000, 30 * 1000) {
-                        @Override
-                        public void onTick(long l) {
-                            new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache(null, null, new IApiCallback<Map<String, Experiment>>() {
-                                @Override
-                                public void onSuccess(Map<String, Experiment> stringExperimentMap) {
-                                    cancelTimer();
-                                }
+                new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache(null, null, new IApiCallback<Map<String, Experiment>>() {
+                    @Override
+                    public void onSuccess(Map<String, Experiment> stringExperimentMap) {
+                    }
 
-                                @Override
-                                public void onFailure(int errorCode, String message) {
-
-                                }
-                            });
-                        }
-
-                        @Override
-                        public void onFinish() {
-                        }
-                    };
-                }
-                mCountDownTimer.start();
+                    @Override
+                    public void onFailure(int errorCode, String message) {
+                        requestExperimentsAndUpdateCacheWithRetry(retryTimes - 1, currentTime);
+                    }
+                });
             }
-        });
-    }
-
-    private void cancelTimer() {
-        try {
-            if (mCountDownTimer != null) {
-                mCountDownTimer.cancel();
-            }
-        } catch (Exception e) {
-            SALog.printStackTrace(e);
-        } finally {
-            mCountDownTimer = null;
-        }
+        };
+        TaskRunner.getBackHandler().postDelayed(requestTask, delayTime);
     }
 
     @Override
@@ -168,20 +157,20 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
     @Override
     public void login() {
         SALog.i(TAG, "login");
-        onDistinctIdChanged();
+        onUserInfoChanged();
     }
 
     @Override
     public void logout() {
         SALog.i(TAG, "logout");
-        onDistinctIdChanged();
+        onUserInfoChanged();
     }
 
     @Override
     public void identify() {
         SALog.i(TAG, "identify");
         if (TextUtils.isEmpty(SensorsDataAPI.sharedInstance().getLoginId())) {
-            onDistinctIdChanged();
+            onUserInfoChanged();
         } else {
             SALog.i(TAG, "User has login, no need change!");
         }
@@ -190,10 +179,13 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
     @Override
     public void resetAnonymousId() {
         SALog.i(TAG, "resetAnonymousId");
-        onDistinctIdChanged();
+        onUserInfoChanged();
     }
 
-    private void onDistinctIdChanged() {
+    /**
+     * 用户信息被修改的时候调用
+     */
+    public static void onUserInfoChanged() {
         try {
             SensorsABTestCacheManager.getInstance().clearCache();
             new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();

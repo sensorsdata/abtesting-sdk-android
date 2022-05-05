@@ -19,6 +19,8 @@ package com.sensorsdata.abtest;
 
 import android.content.Context;
 
+import java.util.Map;
+
 public class SensorsABTestEmptyImplementation extends SensorsABTest {
 
     SensorsABTestEmptyImplementation() {
@@ -61,5 +63,9 @@ public class SensorsABTestEmptyImplementation extends SensorsABTest {
 
     @Override
     public <T> void fastFetchABTest(SensorsABTestExperiment<T> experiment, OnABTestReceivedData<T> callBack) {
+    }
+
+    @Override
+    public void setCustomIDs(Map<String, String> customIds) {
     }
 }

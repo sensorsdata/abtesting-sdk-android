@@ -25,8 +25,11 @@ import com.sensorsdata.analytics.android.sdk.util.SensorsDataUtils;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -51,6 +54,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         findViewById(R.id.bt_distinct_id).setOnClickListener(this);
         findViewById(R.id.clear_cache).setOnClickListener(this);
         findViewById(R.id.clear_screen).setOnClickListener(this);
+        findViewById(R.id.bt_update_custom_ids).setOnClickListener(this);
         mSpinner = findViewById(R.id.spinner_experiment_id);
         mTypeSpinner = findViewById(R.id.spinner_type);
         mDefaultValueSpinner = findViewById(R.id.spinner_default_value);
@@ -175,6 +179,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.clear_cache:
                 SensorsABTestCacheManager.getInstance().loadExperimentsFromCache("");
                 SensorsABTestCacheManager.getInstance().saveFuzzyExperiments(null);
+                break;
+            case R.id.bt_update_custom_ids:
+                Map<String, String> ids = new HashMap<>();
+                Random random = new Random();
+                ids.put("key_a_" + random.nextInt(100), "value_a_" + random.nextInt(100));
+                ids.put("key_b_" + random.nextInt(100), "value_b_" + random.nextInt(100));
+                SensorsABTest.shareInstance().setCustomIDs(ids);
                 break;
         }
     }

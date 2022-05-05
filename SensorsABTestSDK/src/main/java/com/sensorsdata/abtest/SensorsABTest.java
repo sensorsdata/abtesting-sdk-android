@@ -24,6 +24,7 @@ import android.util.Log;
 import com.sensorsdata.abtest.core.SABErrorDispatcher;
 import com.sensorsdata.abtest.core.SensorsABTestApiRequestHelper;
 import com.sensorsdata.abtest.core.SensorsABTestCacheManager;
+import com.sensorsdata.abtest.core.SensorsABTestCustomIdsManager;
 import com.sensorsdata.abtest.core.SensorsABTestHelper;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.store.StoreManagerFactory;
@@ -178,6 +179,16 @@ public class SensorsABTest implements ISensorsABTestApi {
         fastFetchABTestInner(experiment.paramName, experiment.defaultValue, experiment.properties, experiment.timeoutMillSeconds, callBack);
     }
 
+    @Override
+    public void setCustomIDs(final Map<String, String> customIds) {
+        TaskRunner.getBackHandler().post(new Runnable() {
+            @Override
+            public void run() {
+                SensorsABTestCustomIdsManager.getInstance().setCustomIds(customIds);
+            }
+        });
+    }
+
     private <T> void asyncFetchABTestInner(final String paramName, final T defaultValue, final Map<String, Object> properties, final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack) {
         try {
             addTrackEventTask(new Runnable() {
@@ -221,8 +232,9 @@ public class SensorsABTest implements ISensorsABTestApi {
     private <T> void requestExperimentWithParams(final String paramName, final T defaultValue, Map<String, Object> properties, int timeoutMillSeconds, final OnABTestReceivedData<T> callBack, boolean mergeRequest) {
         try {
             if (timeoutMillSeconds > 0) {
-                SALog.i(TAG, "timeoutMillSeconds minimum value is 1000ms");
+                SALog.i(TAG, "timeoutMillSeconds minimum value is 1000ms, timeoutMillSeconds maximum value is 30*1000ms");
                 timeoutMillSeconds = Math.max(1000, timeoutMillSeconds);
+                timeoutMillSeconds = Math.min(TIMEOUT_REQUEST, timeoutMillSeconds);
             } else {
                 SALog.i(TAG, "timeoutMillSeconds params is not valid: <= 0 and set default value: " + TIMEOUT_REQUEST);
                 timeoutMillSeconds = TIMEOUT_REQUEST;
@@ -231,7 +243,8 @@ public class SensorsABTest implements ISensorsABTestApi {
             final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
             final String loginId = SensorsDataAPI.sharedInstance().getLoginId();
             final String anonymousId = SensorsDataAPI.sharedInstance().getAnonymousId();
-            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, loginId, anonymousId, paramName, defaultValue, properties, timeoutMillSeconds, callBack, mergeRequest);
+            final String customIds = SensorsABTestCustomIdsManager.getInstance().getCustomIdsString();
+            new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, loginId, anonymousId, customIds, paramName, defaultValue, properties, timeoutMillSeconds, callBack, mergeRequest);
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }

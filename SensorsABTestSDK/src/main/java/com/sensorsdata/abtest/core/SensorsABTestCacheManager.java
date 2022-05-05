@@ -20,6 +20,7 @@ package com.sensorsdata.abtest.core;
 
 import android.text.TextUtils;
 
+import com.sensorsdata.abtest.entity.AppConstants;
 import com.sensorsdata.abtest.entity.Experiment;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.store.StoreManagerFactory;
@@ -35,11 +36,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SensorsABTestCacheManager implements IExperimentCacheAPI {
+public class SensorsABTestCacheManager {
 
     private static final String TAG = "SAB.SensorsABTestCacheManager";
     public ConcurrentHashMap<String, Experiment> mHashMap;
-    private static final String KEY_EXPERIMENT = "key_experiment_with_distinct_id";
     private JSONArray mFuzzyExperiments = null;
     private String mIdentifier = "";
 
@@ -60,18 +60,16 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
      *
      * @param result 网络请求的试验结果
      */
-    @Override
     public void saveExperiments2DiskCache(String result) {
         SALog.i(TAG, "更新试验数据成功:\n" + result);
-        StoreManagerFactory.getStoreManager().putString(KEY_EXPERIMENT, result);
+        StoreManagerFactory.getStoreManager().putString(AppConstants.Property.Key.EXPERIMENT_CACHE_KEY, result);
     }
 
     /**
      * 启动时检查文件缓存，更新至内存中
      */
-    @Override
     public void loadExperimentsFromDiskCache() {
-        String experiments = StoreManagerFactory.getStoreManager().getString(KEY_EXPERIMENT, "");
+        String experiments = StoreManagerFactory.getStoreManager().getString(AppConstants.Property.Key.EXPERIMENT_CACHE_KEY, "");
         SALog.i(TAG, "loadExperimentsFromDiskCache | experiments:\n" + JSONUtils.formatJson(experiments));
         getExperimentsFromMemoryCache(experiments);
     }
@@ -81,7 +79,6 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
      *
      * @param result response 结果
      */
-    @Override
     public ConcurrentHashMap<String, Experiment> getExperimentsFromMemoryCache(String result) {
         ConcurrentHashMap<String, Experiment> hashMap = new ConcurrentHashMap<>();
         if (TextUtils.isEmpty(result)) {
@@ -147,7 +144,6 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
         }
     }
 
-    @Override
     public ConcurrentHashMap<String, Experiment> loadExperimentsFromCache(String result) {
         ConcurrentHashMap<String, Experiment> hashMap = getExperimentsFromMemoryCache(result);
         saveExperiments2DiskCache(result);
@@ -198,7 +194,11 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
                 if (t != null) {
                     SALog.i(TAG, "getExperimentVariableValue success and type: " + t.getClass() + " ,value: " + t.toString());
                     if (!experiment.isWhiteList) {
-                        SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, SensorsDataAPI.sharedInstance().getDistinctId(), SensorsDataAPI.sharedInstance().getLoginId(), SensorsDataAPI.sharedInstance().getAnonymousId());
+                        SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment,
+                                SensorsDataAPI.sharedInstance().getDistinctId(),
+                                SensorsDataAPI.sharedInstance().getLoginId(),
+                                SensorsDataAPI.sharedInstance().getAnonymousId(),
+                                SensorsABTestCustomIdsManager.getInstance().getCustomIdsString());
                     }
                 }
                 return t;
@@ -215,12 +215,10 @@ public class SensorsABTestCacheManager implements IExperimentCacheAPI {
         return null;
     }
 
-    @Override
     public void saveFuzzyExperiments(JSONArray fuzzyExperiments) {
         mFuzzyExperiments = fuzzyExperiments;
     }
 
-    @Override
     public boolean isFuzzyExperiments(String experimentName) {
         if (mFuzzyExperiments == null) {
             return true;

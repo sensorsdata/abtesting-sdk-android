@@ -57,7 +57,7 @@ public class SensorsABTestApiRequestHelper<T> {
     private boolean mHasCallback = false;
     private String mUserIdentifier;
 
-    public void requestExperimentByParamName(final String distinctId, final String loginId, final String anonymousId,
+    public void requestExperimentByParamName(final String distinctId, final String loginId, final String anonymousId, final String customIDs,
                                              final String paramName, final T defaultValue, Map<String, Object> properties,
                                              final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack, boolean mergeRequest) {
         // callback 为 null
@@ -116,10 +116,10 @@ public class SensorsABTestApiRequestHelper<T> {
                 return;
             }
             // step3.如果是需要拉取请求的试验，检查当前请求是否已经正在进行，如果正在进行则合并请求并结束，如果没有则进行请求
-            currentTask = RequestExperimentTaskRecorderManager.getInstance().mergeRequest(loginId, anonymousId, paramName, properties, timeoutMillSeconds, callBack, defaultValue);
+            currentTask = RequestExperimentTaskRecorderManager.getInstance().mergeRequest(loginId, anonymousId, customIDs, paramName, properties, timeoutMillSeconds, callBack, defaultValue);
         } else {
             // step2.如果不是需要合并的请求，直接创建任务
-            currentTask = RequestExperimentTaskRecorderManager.getInstance().createRequest(loginId, anonymousId, paramName, properties, timeoutMillSeconds, callBack, defaultValue);
+            currentTask = RequestExperimentTaskRecorderManager.getInstance().createRequest(loginId, anonymousId, customIDs, paramName, properties, timeoutMillSeconds, callBack, defaultValue);
         }
         if (currentTask.isMergedTask()) {
             return;
@@ -175,7 +175,7 @@ public class SensorsABTestApiRequestHelper<T> {
                             doCallbackOnMainThread(onABTestReceivedData, value);
 
                             if (!experiment.isWhiteList) {
-                                SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, distinctId, loginId, anonymousId);
+                                SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, distinctId, loginId, anonymousId, customIDs);
                             }
                         }
                     } catch (Exception e) {

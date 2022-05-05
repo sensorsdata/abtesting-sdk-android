@@ -28,15 +28,17 @@ import java.util.Map;
 public class RequestExperimentTaskRecorder {
     private final String mLoginId;
     private final String mAnonymousId;
+    private final String mCustomIds;
     private final String mParamName;
     private final Map<String, Object> mProperties;
     private final int mTimeoutMillSeconds;
     private final List<RequestingExperimentInfo> mRequestingExperimentInfoList = new ArrayList<>();
     private boolean mIsMergedTask = false;
 
-    RequestExperimentTaskRecorder(String loginId, String anonymousId, String paramName, Map<String, Object> properties, int timeoutMillSeconds) {
+    RequestExperimentTaskRecorder(String loginId, String anonymousId, String customIDs, String paramName, Map<String, Object> properties, int timeoutMillSeconds) {
         this.mLoginId = loginId;
         this.mAnonymousId = anonymousId;
+        this.mCustomIds = customIDs;
         this.mParamName = paramName;
         this.mProperties = properties;
         this.mTimeoutMillSeconds = timeoutMillSeconds;
@@ -50,9 +52,10 @@ public class RequestExperimentTaskRecorder {
         return mRequestingExperimentInfoList;
     }
 
-    boolean isSameExperimentTask(String loginId, String anonymousId, String paramName, Map<String, Object> properties, int timeoutMillSeconds) {
+    boolean isSameExperimentTask(String loginId, String anonymousId, String customIDs, String paramName, Map<String, Object> properties, int timeoutMillSeconds) {
         return TextUtils.equals(loginId, mLoginId)
                 && TextUtils.equals(anonymousId, mAnonymousId)
+                && TextUtils.equals(customIDs, mCustomIds)
                 && (properties == null || TextUtils.equals(paramName, mParamName))
                 && isSameProperties(properties)
                 && timeoutMillSeconds == mTimeoutMillSeconds;

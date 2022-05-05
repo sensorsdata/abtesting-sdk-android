@@ -94,7 +94,7 @@ class StoreManagerSAImpl implements IStoreManager {
 
         public void init(Context context) {
             String oldSpFileName = "spUtils";
-            List<StorePlugin> saRegisterPlugins = SensorsDataAPI.getConfigOptions().getStorePlugins();
+            List<StorePlugin> saRegisterPlugins = SensorsDataAPI.sharedInstance().getConfigOptions().getStorePlugins();
             DefaultStorePlugin defaultStorePlugin = new DefaultStorePlugin(context, oldSpFileName) {
                 @Override
                 public List<String> storeKeys() {

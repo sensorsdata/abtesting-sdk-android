@@ -20,6 +20,7 @@ package com.sensorsdata.abtest.entity;
 import android.text.TextUtils;
 
 import com.sensorsdata.abtest.BuildConfig;
+import com.sensorsdata.abtest.core.SensorsABTestCustomIdsManager;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.util.JSONUtils;
@@ -56,6 +57,10 @@ public class ExperimentRequest {
             if (mProperties != null && mProperties.size() > 0 && !TextUtils.isEmpty(mParamName)) {
                 jsonObject.put("custom_properties", new JSONObject(mProperties));
                 jsonObject.put("param_name", mParamName);
+            }
+            JSONObject customIds = SensorsABTestCustomIdsManager.getInstance().getCustomIds();
+            if (customIds != null && customIds.length() != 0) {
+                jsonObject.put("custom_ids", customIds);
             }
             try {
                 if (mJSONObject != null) {

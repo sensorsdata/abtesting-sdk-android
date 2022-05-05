@@ -21,4 +21,11 @@ public interface AppConstants {
     String AB_TEST_SUCCESS = "SUCCESS";
     String AB_TEST_FAILURE = "FAILED";
     String AB_TEST_CACHE_FILE_NAME = "com.sensorsdata.abtest.cache";
+
+    interface Property {
+        interface Key {
+            String CUSTOM_IDS = "custom_ids";
+            String EXPERIMENT_CACHE_KEY = "key_experiment_with_distinct_id";
+        }
+    }
 }

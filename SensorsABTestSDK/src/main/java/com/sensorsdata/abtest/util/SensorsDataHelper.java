@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 public class SensorsDataHelper {
 
     private static final Pattern KEY_PATTERN = Pattern.compile(
-            "^((?!^distinct_id$|^original_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$)[a-zA-Z_][a-zA-Z\\d_]{0,100})$",
+            "^((?!^distinct_id$|^original_id$|^time$|^properties$|^id$|^first_id$|^second_id$|^users$|^events$|^event$|^user_id$|^date$|^datetime$|^device_id$|^event_id$|^user_group[\\S]*$|^user_tag[\\S]*$)[a-zA-Z_][a-zA-Z\\d_]{0,100})$",
             Pattern.CASE_INSENSITIVE);
     private static final int PROPERTY_VALUE_MAX_LENGTH = 8191;
 
@@ -76,6 +76,10 @@ public class SensorsDataHelper {
         return new Pair<>(entry.getKey(), stringValue);
     }
 
+    public static boolean isKeyMatch(String key) {
+        return KEY_PATTERN.matcher(key).matches();
+    }
+
     private static void checkProperty(Map.Entry<String, Object> entry) throws DataInvalidException {
         String key = entry.getKey();
         Object value = entry.getValue();
@@ -85,7 +89,7 @@ public class SensorsDataHelper {
         if (key.length() > 100) {
             throw new DataInvalidException(createKeyInvalidMsg(key));
         }
-        if (!(KEY_PATTERN.matcher(key).matches())) {
+        if (!isKeyMatch(key)) {
             throw new DataInvalidException(createKeyInvalidMsg(key));
         }
         if (value == null) {

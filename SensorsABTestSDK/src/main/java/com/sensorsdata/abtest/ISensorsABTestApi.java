@@ -17,6 +17,8 @@
 
 package com.sensorsdata.abtest;
 
+import java.util.Map;
+
 interface ISensorsABTestApi {
 
     /**
@@ -88,4 +90,11 @@ interface ISensorsABTestApi {
      * @param <T> 默认值类型
      */
     <T> void fastFetchABTest(SensorsABTestExperiment<T> experiment, OnABTestReceivedData<T> callBack);
+
+    /**
+     * 设置自定义的主体 IDs，可以有 1 个或者多个主体 ID
+     *
+     * @param customIds 需要设置的主体 IDs
+     */
+    void setCustomIDs(Map<String, String> customIds);
 }

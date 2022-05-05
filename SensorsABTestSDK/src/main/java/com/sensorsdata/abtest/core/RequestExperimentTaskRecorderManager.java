@@ -40,31 +40,31 @@ public class RequestExperimentTaskRecorderManager {
         return SingleHolder.INSTANCE;
     }
 
-    synchronized <T> RequestExperimentTaskRecorder createRequest(String loginId, String anonymousId, String paramName,
+    synchronized <T> RequestExperimentTaskRecorder createRequest(String loginId, String anonymousId, String customIDs, String paramName,
                                                                  Map<String, Object> properties, int timeoutMillSeconds,
                                                                  OnABTestReceivedData<T> onABTestReceivedData, T defaultValue) {
         SALog.i(TAG, "create new request task");
-        RequestExperimentTaskRecorder currentTask = new RequestExperimentTaskRecorder(loginId, anonymousId, paramName, properties, timeoutMillSeconds);
+        RequestExperimentTaskRecorder currentTask = new RequestExperimentTaskRecorder(loginId, anonymousId, customIDs, paramName, properties, timeoutMillSeconds);
         mTaskList.add(currentTask);
         currentTask.addRequestingExperimentInfo(new RequestingExperimentInfo(onABTestReceivedData, paramName, defaultValue));
         currentTask.setIsMergedTask(false);
         return currentTask;
     }
 
-    synchronized <T> RequestExperimentTaskRecorder mergeRequest(String loginId, String anonymousId, String paramName,
+    synchronized <T> RequestExperimentTaskRecorder mergeRequest(String loginId, String anonymousId, String customIDs, String paramName,
                                                                 Map<String, Object> properties, int timeoutMillSeconds,
                                                                 OnABTestReceivedData<T> onABTestReceivedData, T defaultValue) {
         boolean isTaskExist = false;
         RequestExperimentTaskRecorder currentTask = null;
         for (RequestExperimentTaskRecorder task : mTaskList) {
-            if (task.isSameExperimentTask(loginId, anonymousId, paramName, properties, timeoutMillSeconds)) {
+            if (task.isSameExperimentTask(loginId, anonymousId, customIDs, paramName, properties, timeoutMillSeconds)) {
                 currentTask = task;
                 isTaskExist = true;
                 break;
             }
         }
         if (currentTask == null) {
-            currentTask = new RequestExperimentTaskRecorder(loginId, anonymousId, paramName, properties, timeoutMillSeconds);
+            currentTask = new RequestExperimentTaskRecorder(loginId, anonymousId, customIDs, paramName, properties, timeoutMillSeconds);
             mTaskList.add(currentTask);
             isTaskExist = false;
         }

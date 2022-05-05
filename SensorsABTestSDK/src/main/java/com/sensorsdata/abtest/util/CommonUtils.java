@@ -17,18 +17,21 @@
 
 package com.sensorsdata.abtest.util;
 
+import com.sensorsdata.abtest.core.SensorsABTestCustomIdsManager;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 
 public class CommonUtils {
     /**
      * 获取用于 AB Testing SDK 区分用户的唯一标识
      * 标识用户使用 distinctId、loginId、anonymousId 三者拼接
+     * 如果存在自定义主体 IDs，自定义主体 IDs 也会拼接到用户唯一标识
      *
      * @return 返回用于标识缓存内容对应的用户唯一标识
      */
     public static String getCurrentUserIdentifier() {
         return SensorsDataAPI.sharedInstance().getDistinctId()
                 + SensorsDataAPI.sharedInstance().getLoginId()
-                + SensorsDataAPI.sharedInstance().getAnonymousId();
+                + SensorsDataAPI.sharedInstance().getAnonymousId()
+                + SensorsABTestCustomIdsManager.getInstance().getCustomIdsString();
     }
 }

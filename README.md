@@ -10,6 +10,10 @@
 
 A/B Testing SDK 是一款用于 A/B 测试的 SDK。
 
+## 集成文档
+
+请参考神策官网 [**A/B Testing 集成文档**](https://manual.sensorsdata.cn/abtesting/latest/android-sdk-a-b-testing-45613062.html)
+
 ## 基本要求
 Android 4.0 及以上。
 

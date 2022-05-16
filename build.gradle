@@ -9,11 +9,13 @@ buildscript {
         maven {
             url 'https://dl.bintray.com/zouyuhan/maven'
         }
+        mavenCentral()
+        mavenLocal()
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.0.0"
         //添加神策分析 android-gradle-plugin 依赖
-        classpath 'com.sensorsdata.analytics.android:android-gradle-plugin2:3.4.1'
+        classpath 'com.sensorsdata.analytics.android:android-gradle-plugin2:3.4.9'
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
@@ -31,6 +33,8 @@ allprojects {
         maven {
             url 'https://dl.bintray.com/zouyuhan/maven'
         }
+        mavenCentral()
+        mavenLocal()
     }
 }
 

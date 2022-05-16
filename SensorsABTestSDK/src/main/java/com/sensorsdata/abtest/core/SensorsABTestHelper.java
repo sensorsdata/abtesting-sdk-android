@@ -25,7 +25,7 @@ import android.text.TextUtils;
 import android.view.View;
 
 import com.sensorsdata.abtest.entity.Experiment;
-import com.sensorsdata.abtest.util.AlarmManagerUtils;
+import com.sensorsdata.abtest.util.SABAlarmManager;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
@@ -80,13 +80,13 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
     @Override
     public void onEnterForeground(boolean resumeFromBackground) {
         SALog.i("AppStartupManager", "onEnterForeground");
-        AlarmManagerUtils.getInstance(mContext).setUpAlarm();
+        SABAlarmManager.getInstance().refreshInterval();
     }
 
     @Override
     public void onEnterBackground() {
         SALog.i("AppStartupManager", "onEnterBackground");
-        AlarmManagerUtils.getInstance(mContext).cancelAlarm();
+        SABAlarmManager.getInstance().cancelAlarm();
     }
 
     private void requestExperimentsAndUpdateCacheWithRetry(final int retryTimes, long lastRequestTime) {

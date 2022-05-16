@@ -67,9 +67,8 @@ public class ExperimentRequest {
                     Iterator<String> iterator = mJSONObject.keys();
                     while (iterator.hasNext()) {
                         String key = iterator.next();
-                        String value = mJSONObject.optString(key);
                         if (!TextUtils.isEmpty(key)) {
-                            jsonObject.put(key, value);
+                            jsonObject.put(key, mJSONObject.opt(key));
                         }
                     }
                 }

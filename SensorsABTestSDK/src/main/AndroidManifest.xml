@@ -2,7 +2,5 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.sensorsdata.abtest">
 
-    <application>
-        <service android:name=".service.GlobalLoopService" />
-    </application>
+    <application></application>
 </manifest>

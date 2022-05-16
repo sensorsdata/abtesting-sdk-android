@@ -23,7 +23,7 @@ import android.os.Looper;
 
 
 public class TaskRunner {
-    private static final String TAG = "SAB.TaskRunner";
+    private static final String TASK_RUNNER_NAME = "SAB.TaskRunner";
 
     private Handler mBackHandler;
     private Handler mUiThreadHandler;
@@ -35,7 +35,7 @@ public class TaskRunner {
     public static synchronized Handler getBackHandler() {
         Handler backHandler = SingletonHolder.sRunner.mBackHandler;
         if (null == backHandler) {
-            HandlerThread handlerThread = new HandlerThread("TaskRunner");
+            HandlerThread handlerThread = new HandlerThread(TASK_RUNNER_NAME);
             handlerThread.start();
             backHandler = new Handler(handlerThread.getLooper());
             SingletonHolder.sRunner.mBackHandler = backHandler;

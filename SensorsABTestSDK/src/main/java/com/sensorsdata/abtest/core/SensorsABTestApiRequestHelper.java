@@ -31,6 +31,7 @@ import com.sensorsdata.abtest.entity.ExperimentRequest;
 import com.sensorsdata.abtest.entity.RequestingExperimentInfo;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.exception.DataInvalidException;
+import com.sensorsdata.abtest.util.AppInfoUtils;
 import com.sensorsdata.abtest.util.CommonUtils;
 import com.sensorsdata.abtest.util.SensorsDataHelper;
 import com.sensorsdata.abtest.util.TaskRunner;
@@ -56,10 +57,14 @@ public class SensorsABTestApiRequestHelper<T> {
     private static final String TAG = "SAB.SensorsABTestApiRequestHelper";
     private boolean mHasCallback = false;
     private String mUserIdentifier;
+    public final static int DEFAULT_TIMEOUT = 30 * 1000;
+    private int timeoutMillSeconds = DEFAULT_TIMEOUT;
+    private TimeoutRunnable runnable;
 
     public void requestExperimentByParamName(final String distinctId, final String loginId, final String anonymousId, final String customIDs,
                                              final String paramName, final T defaultValue, Map<String, Object> properties,
                                              final int timeoutMillSeconds, final OnABTestReceivedData<T> callBack, boolean mergeRequest) {
+        setTimeoutMillSeconds(timeoutMillSeconds);
         // callback 为 null
         if (callBack == null) {
             SALog.i(TAG, "试验 callback 不正确，试验 callback 不能为空！");
@@ -126,8 +131,10 @@ public class SensorsABTestApiRequestHelper<T> {
         }
 
         // 启动定时器
-        final TimeoutRunnable runnable = new TimeoutRunnable(currentTask);
-        TaskRunner.getBackHandler().postDelayed(runnable, timeoutMillSeconds);
+        if (!AppInfoUtils.checkSASDKVersionIsValid(AppInfoUtils.SA_TIMEOUT_VALID_VERSION)) {
+            runnable = new TimeoutRunnable(currentTask);
+            TaskRunner.getBackHandler().postDelayed(runnable, timeoutMillSeconds);
+        }
 
         mUserIdentifier = CommonUtils.getCurrentUserIdentifier();
         requestExperimentsAndUpdateCache(propertiesString, paramName, new IApiCallback<Map<String, Experiment>>() {
@@ -135,7 +142,9 @@ public class SensorsABTestApiRequestHelper<T> {
             public void onSuccess(Map<String, Experiment> experimentMap) {
                 RequestExperimentTaskRecorderManager.getInstance().removeTask(currentTask);
                 List<RequestingExperimentInfo> taskExperimentInfoList = currentTask.getRequestingExperimentList();
-                TaskRunner.getBackHandler().removeCallbacks(runnable);
+                if (!AppInfoUtils.checkSASDKVersionIsValid(AppInfoUtils.SA_TIMEOUT_VALID_VERSION)) {
+                    TaskRunner.getBackHandler().removeCallbacks(runnable);
+                }
                 if (mHasCallback) {
                     SALog.i(TAG, "Request success! but all callbacks has been returned with default value!");
                     return;
@@ -188,7 +197,9 @@ public class SensorsABTestApiRequestHelper<T> {
 
             @Override
             public void onFailure(int errorCode, String message) {
-                TaskRunner.getBackHandler().removeCallbacks(runnable);
+                if (!AppInfoUtils.checkSASDKVersionIsValid(AppInfoUtils.SA_TIMEOUT_VALID_VERSION)) {
+                    TaskRunner.getBackHandler().removeCallbacks(runnable);
+                }
                 RequestExperimentTaskRecorderManager.getInstance().removeTask(currentTask);
                 if (!mHasCallback) {
                     List<RequestingExperimentInfo> taskExperimentInfoList = currentTask.getRequestingExperimentList();
@@ -232,8 +243,16 @@ public class SensorsABTestApiRequestHelper<T> {
         }
         Map<String, String> headers = new HashMap<>();
         headers.put("project-key", key);
-        new RequestHelper.Builder(HttpMethod.POST, url)
-                .header(headers)
+        RequestHelper.Builder builder = new RequestHelper.Builder(HttpMethod.POST, url);
+        if (AppInfoUtils.checkSASDKVersionIsValid(AppInfoUtils.SA_TIMEOUT_VALID_VERSION)) {
+            try {
+                builder.connectionTimeout(timeoutMillSeconds);
+                builder.readTimeout(timeoutMillSeconds);
+            } catch (NoSuchMethodError e) {
+                SALog.i(TAG, e.getMessage());
+            }
+        }
+        builder.header(headers)
                 .jsonData(requestBody)
                 .callback(new HttpCallback.StringCallback() {
                     @Override
@@ -354,5 +373,10 @@ public class SensorsABTestApiRequestHelper<T> {
                 mHasCallback = true;
             }
         }
+    }
+
+    public SensorsABTestApiRequestHelper setTimeoutMillSeconds(int timeoutMillSeconds) {
+        this.timeoutMillSeconds = timeoutMillSeconds;
+        return this;
     }
 }

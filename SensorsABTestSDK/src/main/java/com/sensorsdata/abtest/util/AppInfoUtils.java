@@ -31,6 +31,10 @@ public class AppInfoUtils {
     private static final String TAG = "AppInfoUtils";
     public static final String MIN_SA_SDK_VERSION = "4.3.6";
     public static final String MIN_SA_SECRET_SDK_VERSION = "6.2.0";
+    /**
+     * 网络超时可用版本
+     */
+    public static final String SA_TIMEOUT_VALID_VERSION = "6.3.4";
 
     public static boolean checkSASDKVersionIsValid() {
         return checkSASDKVersionIsValid(MIN_SA_SDK_VERSION);
@@ -40,7 +44,7 @@ public class AppInfoUtils {
         return checkSASDKVersionIsValid(MIN_SA_SECRET_SDK_VERSION);
     }
 
-    private static boolean checkSASDKVersionIsValid(String saVersion) {
+    public static boolean checkSASDKVersionIsValid(String saVersion) {
         SensorsDataAPI sensorsDataAPI = SensorsDataAPI.sharedInstance();
         if (sensorsDataAPI instanceof SensorsDataAPIEmptyImplementation) {
             Log.e(TAG, "神策 Android 埋点 SDK 未集成或未初始化");

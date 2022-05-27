@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'signing'
 apply plugin: 'maven-publish'
 
-version = "0.2.2"
+version = "0.2.3"
 android {
     compileSdkVersion 29
 
@@ -47,7 +47,7 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
-    compileOnly 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:6.3.3'
+    compileOnly 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:6.3.4'
 //    compileOnly files('libs/SensorsAnalyticsSDK-6.2.0.aar')
 }
 

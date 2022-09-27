@@ -26,6 +26,7 @@ public interface AppConstants {
         interface Key {
             String CUSTOM_IDS = "custom_ids";
             String EXPERIMENT_CACHE_KEY = "key_experiment_with_distinct_id";
+            String ABTEST_TRIGGER = "abtest_trigger";
         }
     }
 }

@@ -20,7 +20,9 @@ package com.sensorsdata.abtest.core;
 import android.text.TextUtils;
 
 import com.sensorsdata.abtest.BuildConfig;
+import com.sensorsdata.abtest.entity.AppConstants;
 import com.sensorsdata.abtest.entity.Experiment;
+import com.sensorsdata.abtest.store.StoreManagerFactory;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 
@@ -28,15 +30,15 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.HashMap;
-import java.util.HashSet;
 
 class SensorsABTestTrackHelper {
     private static final String TAG = "SAB.SensorsABTestTrackHelper";
     private static volatile SensorsABTestTrackHelper mInstance;
-    private HashMap<String, HashSet<String>> mABTestTriggerEventHashMap = null;
+    private JSONObject mABTestTriggerCache;
+    private boolean mLibPluginVersionAdded;
 
     private SensorsABTestTrackHelper() {
+        loadABTestTriggerCache();
     }
 
     public static SensorsABTestTrackHelper getInstance() {
@@ -51,7 +53,7 @@ class SensorsABTestTrackHelper {
     }
 
     public void trackABTestTrigger(Experiment experiment, String distinctId, String loginId, String anonymousId, String customIDs) {
-        if (experiment == null || TextUtils.isEmpty(experiment.experimentId)) {
+        if (experiment == null || TextUtils.isEmpty(experiment.experimentId) || TextUtils.isEmpty(experiment.experimentGroupId)) {
             SALog.i(TAG, "trackABTestTrigger param experiment is invalid");
             return;
         }
@@ -59,10 +61,11 @@ class SensorsABTestTrackHelper {
         if (TextUtils.isEmpty(distinctId)) {
             SALog.i(TAG, "trackABTestTrigger distinctId is null");
             return;
+
         }
 
-        if (!isTrackABTestTrigger(experiment.experimentId, distinctId + customIDs)) {
-            SALog.i(TAG, "trackABTestTrigger experimentId: " + experiment.experimentId + " has triggered and return");
+        if (!isTrackABTestTrigger(distinctId + customIDs, experiment.experimentId, experiment.experimentGroupId)) {
+            SALog.i(TAG, "trackABTestTrigger experimentId: " + experiment.experimentId + "，experimentGroupId：" + experiment.experimentGroupId + " has triggered and return");
             return;
         }
 
@@ -70,10 +73,12 @@ class SensorsABTestTrackHelper {
         try {
             jsonObject.put("$abtest_experiment_id", experiment.experimentId);
             jsonObject.put("$abtest_experiment_group_id", experiment.experimentGroupId);
-            if (mABTestTriggerEventHashMap == null) {
+            // 冷启动第一次追加 $lib_plugin_version 属性
+            if (!mLibPluginVersionAdded) {
                 JSONArray array = getSDKVersion();
                 if (array != null) {
                     jsonObject.put("$lib_plugin_version", array);
+                    mLibPluginVersionAdded = true;
                 }
             }
             // 当前 id 和试验请求 id 不一致时，以试验请求 id 为准
@@ -83,7 +88,7 @@ class SensorsABTestTrackHelper {
                 jsonObject.put("$abtest_anonymous_id", anonymousId);
             }
             SensorsDataAPI.sharedInstance().track("$ABTestTrigger", jsonObject);
-            addExperimentId2HashMap(experiment.experimentId, distinctId + customIDs);
+            saveABTestTrigger(distinctId + customIDs, experiment.experimentId, experiment.experimentGroupId);
         } catch (JSONException e) {
             SALog.printStackTrace(e);
         } catch (Exception e) {
@@ -91,11 +96,12 @@ class SensorsABTestTrackHelper {
         }
     }
 
-    private boolean isTrackABTestTrigger(String experimentId, String triggerKey) {
+    private boolean isTrackABTestTrigger(String triggerKey, String experimentId, String experimentGroupId) {
         try {
-            if (mABTestTriggerEventHashMap != null && mABTestTriggerEventHashMap.containsKey(triggerKey)) {
-                HashSet<String> stringHashSet = mABTestTriggerEventHashMap.get(triggerKey);
-                return stringHashSet == null || !stringHashSet.contains(experimentId);
+            if (mABTestTriggerCache != null && mABTestTriggerCache.has(triggerKey)) {
+                SALog.i(TAG, "isTrackABTestTrigger mABTestTriggerCache is " + mABTestTriggerCache.toString());
+                JSONObject obj = mABTestTriggerCache.optJSONObject(triggerKey);
+                return obj == null || !obj.has(experimentId) || !TextUtils.equals(experimentGroupId, obj.optString(experimentId));
             }
         } catch (Exception e) {
             SALog.printStackTrace(e);
@@ -103,18 +109,39 @@ class SensorsABTestTrackHelper {
         return true;
     }
 
-    private void addExperimentId2HashMap(String experimentId, String triggerKey) {
-        if (mABTestTriggerEventHashMap == null) {
-            mABTestTriggerEventHashMap = new HashMap<>();
+    private void loadABTestTriggerCache() {
+        String abTestTrigger = StoreManagerFactory.getStoreManager().getString(AppConstants.Property.Key.ABTEST_TRIGGER, "");
+        if (!TextUtils.isEmpty(abTestTrigger)) {
+            try {
+                SALog.i(TAG, "loadABTestTriggerCache abTestTrigger is " + abTestTrigger);
+                mABTestTriggerCache = new JSONObject(abTestTrigger);
+            } catch (JSONException e) {
+                SALog.printStackTrace(e);
+            }
         }
-        SALog.i(TAG, "addExperimentId2HashMap mABTestTriggerEventHashMap old: " + mABTestTriggerEventHashMap.toString());
-        HashSet<String> hashSet = mABTestTriggerEventHashMap.get(triggerKey);
-        if (hashSet == null) {
-            hashSet = new HashSet<>();
+    }
+
+    private void saveABTestTrigger(String triggerKey, String experimentId, String experimentGroupId) {
+        if (TextUtils.isEmpty(triggerKey) || TextUtils.isEmpty(experimentId) || TextUtils.isEmpty(experimentGroupId)) {
+            return;
         }
-        hashSet.add(experimentId);
-        mABTestTriggerEventHashMap.put(triggerKey, hashSet);
-        SALog.i(TAG, "addExperimentId2HashMap mABTestTriggerEventHashMap last: " + mABTestTriggerEventHashMap.toString());
+        if (mABTestTriggerCache == null) {
+            mABTestTriggerCache = new JSONObject();
+        }
+        JSONObject obj = mABTestTriggerCache.optJSONObject(triggerKey);
+        if (obj == null || !obj.has(experimentId) || !TextUtils.equals(experimentGroupId, obj.optString(experimentId))) {
+            try {
+                if (obj == null) {
+                    obj = new JSONObject();
+                }
+                obj.put(experimentId, experimentGroupId);
+                SALog.i(TAG, String.format("saveABTestTrigger triggerKey is %s,experimentId is %s,experimentGroupId is %s ", triggerKey, experimentId, experimentGroupId));
+                mABTestTriggerCache.put(triggerKey, obj);
+                StoreManagerFactory.getStoreManager().putString(AppConstants.Property.Key.ABTEST_TRIGGER, mABTestTriggerCache.toString());
+            } catch (JSONException e) {
+                SALog.printStackTrace(e);
+            }
+        }
     }
 
     private JSONArray getSDKVersion() {

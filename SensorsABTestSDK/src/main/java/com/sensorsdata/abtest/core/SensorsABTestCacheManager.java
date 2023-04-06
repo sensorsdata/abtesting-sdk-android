@@ -33,18 +33,28 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 public class SensorsABTestCacheManager {
 
     private static final String TAG = "SAB.SensorsABTestCacheManager";
-    public ConcurrentHashMap<String, Experiment> mHashMap;
+    private final ConcurrentHashMap<String, Experiment> mHashMap;
+    /** 与 mHashMap 类似，该 Map 用于保存 out list 中的结果，其 key 是 paramName, value 是 Experiment */
+    private final ConcurrentHashMap<String, Experiment> mOutListHashMap;
+    private final CopyOnWriteArraySet<String> mDispatchResultSet;
     private JSONArray mFuzzyExperiments = null;
     private String mIdentifier = "";
 
     private SensorsABTestCacheManager() {
         mHashMap = new ConcurrentHashMap<>();
+        mOutListHashMap = new ConcurrentHashMap<>();
+        mDispatchResultSet = new CopyOnWriteArraySet<>();
     }
 
     private static class SensorsABTestCacheManagerStaticNestedClass {
@@ -71,25 +81,83 @@ public class SensorsABTestCacheManager {
     public void loadExperimentsFromDiskCache() {
         String experiments = StoreManagerFactory.getStoreManager().getString(AppConstants.Property.Key.EXPERIMENT_CACHE_KEY, "");
         SALog.i(TAG, "loadExperimentsFromDiskCache | experiments:\n" + JSONUtils.formatJson(experiments));
-        getExperimentsFromMemoryCache(experiments);
+        updateExperimentsMemoryCache(experiments);
+        updateOutListExperimentMemoryCache(experiments);
     }
 
     /**
-     * 更新内存缓存
+     * 更新 out list 试验缓存
+     *
+     * @param result 试验 json 数据
+     */
+    public void updateOutListExperimentMemoryCache(String result) {
+        if (TextUtils.isEmpty(result)) {
+            mOutListHashMap.clear();
+            return;
+        }
+        try {
+            JSONObject jsonObject = new JSONObject(result);
+            JSONArray outListArray = jsonObject.optJSONArray("outList");
+            mOutListHashMap.clear();
+            if (outListArray == null || outListArray.length() == 0) {
+                return;
+            }
+            for (int i = 0; i < outListArray.length(); i++) {
+                JSONObject experimentObj = outListArray.optJSONObject(i);
+                if (experimentObj != null) {
+                    Experiment experiment = new Experiment();
+
+                    experiment.experimentId = experimentObj.optString("abtest_experiment_id");
+                    experiment.experimentGroupId = experimentObj.optString("abtest_experiment_group_id");
+                    experiment.isControlGroup = experimentObj.optBoolean("is_control_group");
+                    experiment.isWhiteList = experimentObj.optBoolean("is_white_list");
+                    experiment.experimentResultId = experimentObj.optString("abtest_experiment_result_id");
+                    experiment.experimentType = experimentObj.optString("experiment_type");
+                    experiment.subjectId = experimentObj.optString("subject_id");
+                    experiment.subjectName = experimentObj.optString("subject_name");
+                    experiment.experimentVersion = experimentObj.optString("abtest_experiment_version");
+                    experiment.originalJsonStr = experimentObj.toString();
+
+                    JSONArray variablesArray = experimentObj.optJSONArray("variables");
+                    if (variablesArray != null && variablesArray.length() > 0) {
+                        List<Experiment.Variable> list = new ArrayList<>();
+                        for (int j = 0; j < variablesArray.length(); j++) {
+                            JSONObject variableObject = variablesArray.optJSONObject(j);
+                            Experiment.Variable variable = new Experiment.Variable();
+                            variable.type = variableObject.optString("type");
+                            variable.name = variableObject.optString("name");
+                            variable.value = variableObject.optString("value");
+                            list.add(variable);
+                            // 服务端对试验列表排序，不同的试验相同 key 按照顺序优先取第一个
+                            if (!mOutListHashMap.containsKey(variable.name)) {
+                                mOutListHashMap.put(variable.name, experiment);
+                            }
+                        }
+                        experiment.variables = list;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            SALog.printStackTrace(e);
+        }
+    }
+
+    /**
+     * 更新内存缓存，并返回缓存结果
      *
      * @param result response 结果
      */
-    public ConcurrentHashMap<String, Experiment> getExperimentsFromMemoryCache(String result) {
+    public ConcurrentHashMap<String, Experiment> updateExperimentsMemoryCache(String result) {
         ConcurrentHashMap<String, Experiment> hashMap = new ConcurrentHashMap<>();
+        mHashMap.clear();
+        mDispatchResultSet.clear();
         if (TextUtils.isEmpty(result)) {
-            mHashMap.clear();
             return hashMap;
         }
         try {
             JSONObject jsonObject = new JSONObject(result);
             String experiments = jsonObject.optString("experiments");
             if (TextUtils.isEmpty(experiments)) {
-                mHashMap.clear();
                 return hashMap;
             }
             parseCache(experiments, hashMap);
@@ -97,15 +165,13 @@ public class SensorsABTestCacheManager {
         } catch (Exception e) {
             SALog.printStackTrace(e);
         }
-        mHashMap.clear();
         mHashMap.putAll(hashMap);
         return hashMap;
     }
 
     private void parseCache(String result, ConcurrentHashMap<String, Experiment> hashMap) {
-        JSONArray array = null;
         try {
-            array = new JSONArray(result);
+            JSONArray array = new JSONArray(result);
             if (array.length() > 0) {
                 for (int i = 0; i < array.length(); i++) {
                     JSONObject object = array.optJSONObject(i);
@@ -118,6 +184,12 @@ public class SensorsABTestCacheManager {
                         experiment.experimentGroupId = object.optString("abtest_experiment_group_id");
                         experiment.isControlGroup = object.optBoolean("is_control_group");
                         experiment.isWhiteList = object.optBoolean("is_white_list");
+                        experiment.experimentResultId = object.optString("abtest_experiment_result_id");
+                        experiment.experimentType = object.optString("experiment_type");
+                        experiment.subjectId = object.optString("subject_id");
+                        experiment.subjectName = object.optString("subject_name");
+                        experiment.experimentVersion = object.optString("abtest_experiment_version");
+                        experiment.originalJsonStr = object.toString();
 
                         JSONArray variablesArray = object.optJSONArray("variables");
                         if (variablesArray != null && variablesArray.length() > 0) {
@@ -136,6 +208,10 @@ public class SensorsABTestCacheManager {
                             }
                             experiment.variables = list;
                         }
+
+                        if (!TextUtils.isEmpty(experiment.experimentResultId)) {
+                            mDispatchResultSet.add(experiment.experimentResultId);
+                        }
                     }
                 }
             }
@@ -144,8 +220,15 @@ public class SensorsABTestCacheManager {
         }
     }
 
-    public ConcurrentHashMap<String, Experiment> loadExperimentsFromCache(String result) {
-        ConcurrentHashMap<String, Experiment> hashMap = getExperimentsFromMemoryCache(result);
+    /**
+     * 更新缓存，并返回 paraName 和试验的映射
+     *
+     * @param result 试验 paraName 和试验的映射
+     * @return Map
+     */
+    public ConcurrentHashMap<String, Experiment> updateExperimentsCache(String result) {
+        ConcurrentHashMap<String, Experiment> hashMap = updateExperimentsMemoryCache(result);
+        updateOutListExperimentMemoryCache(result);
         saveExperiments2DiskCache(result);
         return hashMap;
     }
@@ -154,7 +237,7 @@ public class SensorsABTestCacheManager {
      * 清除文件缓存
      */
     void clearCache() {
-        loadExperimentsFromCache("");
+        updateExperimentsCache("");
         mFuzzyExperiments = null;
     }
 
@@ -171,12 +254,19 @@ public class SensorsABTestCacheManager {
         return null;
     }
 
+    public Experiment getExperimentByParamNameFromOutList(String paramName) {
+        if (paramName != null && CommonUtils.getCurrentUserIdentifier().equals(mIdentifier) && mOutListHashMap.containsKey(paramName)) {
+            return mOutListHashMap.get(paramName);
+        }
+        return null;
+    }
+
     /**
      * 获取缓存中的试验变量值
      *
-     * @param paramName 试验参数名
+     * @param paramName    试验参数名
      * @param defaultValue 默认值
-     * @param <T> 类型
+     * @param <T>          类型
      * @return 缓存中的试验变量值
      */
     public <T> T getExperimentVariableValue(String paramName, T defaultValue) {
@@ -187,16 +277,24 @@ public class SensorsABTestCacheManager {
         if (defaultValue != null) {
             SALog.i(TAG, "getExperimentVariableValue param name: " + paramName + " , type: " + defaultValue.getClass());
         }
-        Experiment experiment = getExperimentByParamName(paramName);
+        T result = checkCachedExperiment(getExperimentByParamName(paramName), paramName, defaultValue);
+        checkCachedExperiment(getExperimentByParamNameFromOutList(paramName), paramName, defaultValue);
+        return result;
+    }
+
+    private <T> T checkCachedExperiment(Experiment experiment, String paramName, T defaultValue) {
         if (experiment != null) {
+            if (TextUtils.equals(experiment.experimentResultId, "-1")) {
+                SALog.i(TAG, "The experiment is from out list.");
+            }
             if (experiment.checkTypeIsValid(paramName, defaultValue)) {
                 T t = experiment.getVariableValue(paramName, defaultValue);
                 if (t != null) {
-                    SALog.i(TAG, "getExperimentVariableValue success and type: " + t.getClass() + " ,value: " + t.toString());
+                    SALog.i(TAG, "checkCachedExperiment success and type: " + t.getClass() + " ,value: " + t.toString());
                     if (!experiment.isWhiteList) {
                         SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment,
                                 SensorsDataAPI.sharedInstance().getDistinctId(),
-                                SensorsDataAPI.sharedInstance().getLoginId(),
+                                CommonUtils.getLoginId(),
                                 SensorsDataAPI.sharedInstance().getAnonymousId(),
                                 SensorsABTestCustomIdsManager.getInstance().getCustomIdsString());
                     }
@@ -211,7 +309,7 @@ public class SensorsABTestCacheManager {
                 SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, paramName, variableType, defaultValue.getClass().toString());
             }
         }
-        SALog.i(TAG, "getExperimentVariableValue return null");
+        SALog.i(TAG, "checkCachedExperiment return null");
         return null;
     }
 
@@ -234,5 +332,23 @@ public class SensorsABTestCacheManager {
             }
         }
         return false;
+    }
+
+    /**
+     * 获取所有分流结果的 unique_id 值
+     *
+     * @return unique_id set
+     */
+    public Set<String> getDispatchUniqueIdResult() {
+        return new HashSet<>(mDispatchResultSet);
+    }
+
+    /**
+     * 获取所有出组的试验
+     *
+     * @return HashMap
+     */
+    public Map<String, Experiment> getOutListExperiment() {
+        return new HashMap<>(mOutListHashMap);
     }
 }

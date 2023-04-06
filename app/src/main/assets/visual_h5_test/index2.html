@@ -1,0 +1,261 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<!-- <style>
+  *{ font-size:30px; margin:25px 25px}
+</style> -->
+<head>
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1"> 
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>yywangDemo</title>
+  <style>
+    .dbtn_accept1 {
+      width: 100%;
+      height: 40px;
+      margin: 10px;
+      border: 4px solid #e91e63;
+      margin: 10px;
+    }
+    </style>
+<script src="http://static.sensorsdata.cn/sdk/1.24.13/sensorsdata.min.js"></script>
+<script src="./abtest.min.js"></script>
+
+<!--//异步初始化方式-->
+<!--<script>
+  (function(para) {
+    var p = para.sdk_url, n = para.name, w = window, d = document, s = 'script',x = null,y = null;
+    if(typeof(w['sensorsDataAnalytic201505']) !== 'undefined') {
+        return false;
+    }
+    w['sensorsDataAnalytic201505'] = n;
+    w[n] = w[n] || function(a) {return function() {(w[n]._q = w[n]._q || []).push([a, arguments]);}};
+    var ifs = ['track','quick','register','registerPage','registerOnce','trackSignup', 'trackAbtest', 'setProfile','setOnceProfile','appendProfile', 'incrementProfile', 'deleteProfile', 'unsetProfile', 'identify','login','logout','trackLink','clearAllRegister','getAppStatus'];
+    for (var i = 0; i < ifs.length; i++) {
+      w[n][ifs[i]] = w[n].call(null, ifs[i]);
+    }
+    if (!w[n]._t) {
+      x = d.createElement(s), y = d.getElementsByTagName(s)[0];
+      x.async = 1;
+      x.src = p;
+      x.setAttribute('charset','UTF-8');
+      w[n].para = para;
+      y.parentNode.insertBefore(x, y);
+    }
+  })({
+   sdk_url:'./JSFile/sensorsdata-ng.full.js',
+   heatmap_url: 'https://cdn.jsdelivr.net/npm/sa-sdk-javascript@1.22.6/heatmap.min.js',
+   name: 'sensors',
+   use_client_time: true,
+   //配置打通 App 与 H5 的参数
+   use_app_track: true,
+   //设置自定义登录 ID 标识
+   login_id_key: 'aaa' ,
+   //app_js_bridge:true ,
+   //app_js_bridge:{
+       //white_list:['https://newsdktest.datasink.sensorsdata.cn/sa?project=liuweiqiang&token=5a394d2405c147ca']
+       //is_send:true
+   //},
+   server_url: 'https://newsdktest.datasink.sensorsdata.cn/sa?project=liuweiqiang&token=5a394d2405c147ca',
+   //server_url: 'http://10.120.162.149:8106/sa?project=default',
+   heatmap: {}
+  
+});
+  
+  //sensors.quick('autoTrack');
+ 
+//  for (var iii = 0; iii < 500; iii++) {
+//              sensors && sensors.track('test', {
+//                  'test': '123'
+//              })}
+</script>
+-->
+<script>
+    var sensors = window['sensorsDataAnalytic201505'];
+    sensors.init({
+        // server_url: ['http://newsdktest.datasink.sensorsdata.cn/sa?project=gongcheng&token=5a394d2405c147ca','http://10.120.111.143:8106/sa?project=default'],
+        server_url: 'http://10.129.20.65:8106/sa?project=test_091',
+        is_track_single_page:true, // 单页面配置，默认开启，若页面中有锚点设计，需要将该配置删除，否则触发锚点会多触发 $pageview 事件
+        use_client_time:true,
+        name:'abs',
+        login_id_key:'aaa',
+        is_track_device_id: true,
+        // encrypt_cookie:true,
+        send_type:'beacon',
+        //heatmap_url: './heatmap.full.js',
+        // web_url:'http://www.gc.com/gc/sdk-heatxss/index.html',
+        show_log:true,
+        source_type :{
+          search: ['.baidu.com','.debugbox.sensorsdata.cn','.gc.com'],
+          keyword: {
+            baidu:['wd','word','keyword'],
+            sogou:'query',
+            gc:'wd'
+          }
+        },
+        source_channel:['aaa','bbb'],
+        preset_properties:{
+            search_keyword_baidu : true,
+        },
+        app_js_bridge: {
+            is_send:false,
+            white_list: ['http://10.129.135.183:8106/sa?project=sdk_test','http://10.120.221.220:8106/sa?project=default','http://10.120.111.143:8106/sa?project=production','http://10.120.73.51:8106/sa?project=default']
+        },
+        // batch_send:true,
+        // app_js_bridge:true,
+        heatmap: {
+            //是否开启点击图，default 表示开启，自动采集 $WebClick 事件，可以设置 'not_collect' 表示关闭。
+            clickmap:'default',
+            //是否开启触达注意力图，not_collect 表示关闭，不会自动采集 $WebStay 事件，可以设置 'default' 表示开启。
+            scroll_notice_map:'default'
+        }
+    });
+    
+    var abtest = sensors.use('SensorsABTest',{
+                url:'http://10.129.20.96:8202/api/v2/abtest/online/results?project-key=6654CD0907B729D4DAE175BA30E11143E52822A9'
+                // url:'http://10.120.77.53:8202/api/v2/abtest/online/results?project-key=985F3B7579CCBBFE389BCCC5BF39B166C61FDD04'
+            });
+    sensors.quick('autoTrack');
+    
+</script>
+<script>
+    
+</script>
+</head>
+
+<body>
+<input type="text" placeholder="输入搜索关键词" id="keyWord"/>
+<textarea >输入内容</textarea>
+<button type="button" id="sosuo" data="test">搜索</button>
+
+<div id="div" name="" >我是DIV2</div> 
+<div class="dbtn_accept1" id="login" data-sensors-click>点击我登录</div>
+<div class="dbtn_accept1" id="div3" data-sensors-click>我是DIV3</div>
+<div class="dbtn_accept1" id="logout" data-sensors-click>点我退出登录</div>
+<div class="dbtn_accept1" id="itemschema" data-sensors-click>itemschema</div>
+<div class="dbtn_accept1" id="UserItemSchema" data-sensors-click>UserItemSchema</div>
+<div class="dbtn_accept1" id="ItemEventSchema" data-sensors-click>ItemEventSchema</div>
+
+<input type="text" placeholder="loginIDKey" id="loginIDKey"/>
+<input type="text" placeholder="loginID" id="loginID"/>
+<button type="button" id="loginWithKey" data="test">loginWithKey</button>
+
+<br>
+<input type="text" placeholder="loginID2" id="loginID2"/>
+<button type="button" id="login2" data="test">login</button>
+</br>
+
+<br>
+<input type="text" placeholder="unbindKey" id="unbindKey"/>
+<input type="text" placeholder="unbindValue" id="unbindValue"/>
+<button type="button" id="unbind" data="test">unbind</button>
+</br>
+
+<br>
+<input type="text" placeholder="bindKey" id="bindKey"/>
+<input type="text" placeholder="bindValue" id="bindValue"/>
+<button type="button" id="bind" data="test">bind</button>
+</br>
+
+<br>
+<input type="text" placeholder="identify" id="identifyID"/>
+<button type="button" id="identify" data="test">identify</button>
+</br>
+
+<script>
+    document.getElementById("ItemEventSchema").onclick = function(){
+        var ItemSchema = new sensors.ItemSchema('aaa', '123');
+        var itemEvent= new sensors.ItemEventSchema('ddd', ItemSchema, 'rrr');
+        itemEvent.track("hihi");
+        //sensors.track("hehe");
+
+    }
+    
+    document.getElementById("itemschema").onclick = function(){
+        //sensors.login('t333');
+        new sensors.ItemSchema('teacher','123').setItem({"aaa":'vvvv'});
+        new sensors.ItemSchema('teacher','123').deleteItem();
+
+    }
+    
+    document.getElementById("UserItemSchema").onclick = function(){
+        //sensors.login('t333');
+        var i = new sensors.ItemSchema('house12', 'HS2456334');
+        var u = new sensors.UserSchema('af');
+        var ui = new sensors.UserItemSchema(i, u);
+        ui.setItem({"aaa":'vvvv'});
+        ui.deleteItem();
+    }
+    
+    
+    document.getElementById("sosuo").onclick = function(){
+        //sensors.login('t333');
+        sensors.track("haha");
+    }
+    
+    document.getElementById("div3").onclick = function(){
+        console.log("t123456");
+  //sensors.track('test2_1089',{
+    //jww_user_id:"数学",
+    //$url:"https://www.baidu.com",
+	//},);
+        sensors.setProfile({"age":78});
+        sensors.setProfile({"testbool":true});
+        sensors.setProfile({"teststring":"string"});
+        sensors.setProfile({"testlist":["as","ff"]});
+        sensors.setProfile({"testdate":new Date()});
+    
+    
+        sensors.setOnceProfile({"age":79});
+        sensors.incrementProfile({"age":80});
+        sensors.appendProfile({"age2":["80","90"]});
+        sensors.unsetProfile(["age"]);
+        sensors.deleteProfile();
+    }
+
+    document.getElementById("login").onclick = function(){
+        sensors.login('t333');
+    }
+
+    document.getElementById("logout").onclick = function(){
+        sensors.logout();
+    }
+
+    document.getElementById("loginWithKey").onclick = function(){
+        sensors.loginWithKey(document.getElementById("loginIDKey").value,document.getElementById("loginID").value);
+    }
+    
+    document.getElementById("login2").onclick = function(){
+        sensors.login(document.getElementById("loginID2").value);
+    }
+    
+    document.getElementById("unbind").onclick = function(){
+        sensors.unbind(document.getElementById("unbindKey").value,document.getElementById("unbindValue").value);
+    }
+    
+    document.getElementById("bind").onclick = function(){
+        sensors.bind(document.getElementById("bindKey").value,document.getElementById("bindValue").value);
+    }
+    
+    document.getElementById("identify").onclick = function(){
+        //sensors.identify(document.getElementById("identifyID").value);
+        
+        
+        abtest.asyncFetchABTest({
+                   param_name:document.getElementById("identifyID").value,
+                   default_value:0,
+                   value_type:"Number",
+                   callback: function(result){
+                       console.log('ab 的结果是',result);
+                       document.getElementById("p2").innerHTML=result
+                   }
+               });
+    }
+    
+    
+
+</script>
+
+<p  style="height:1000px"></p>
+</body>
+</html> 

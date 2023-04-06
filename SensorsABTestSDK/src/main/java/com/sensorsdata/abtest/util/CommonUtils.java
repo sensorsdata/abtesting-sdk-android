@@ -17,6 +17,8 @@
 
 package com.sensorsdata.abtest.util;
 
+import android.text.TextUtils;
+
 import com.sensorsdata.abtest.core.SensorsABTestCustomIdsManager;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 
@@ -30,8 +32,19 @@ public class CommonUtils {
      */
     public static String getCurrentUserIdentifier() {
         return SensorsDataAPI.sharedInstance().getDistinctId()
-                + SensorsDataAPI.sharedInstance().getLoginId()
+                + getLoginId()
                 + SensorsDataAPI.sharedInstance().getAnonymousId()
                 + SensorsABTestCustomIdsManager.getInstance().getCustomIdsString();
+    }
+
+    /**
+     * SensorsDataAPI.sharedInstance().getLoginId() 在不同线程下返回的值不同
+     * 这里统一使用主线程下的默认值：null
+     *
+     * @return id
+     */
+    public static String getLoginId() {
+        String id = SensorsDataAPI.sharedInstance().getLoginId();
+        return TextUtils.isEmpty(id) ? null : id;
     }
 }

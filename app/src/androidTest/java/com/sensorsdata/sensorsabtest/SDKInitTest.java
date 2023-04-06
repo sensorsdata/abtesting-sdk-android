@@ -1,15 +1,21 @@
 package com.sensorsdata.sensorsabtest;
 
 import android.content.Context;
+import android.text.TextUtils;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import com.sensorsdata.abtest.SensorsABTest;
 import com.sensorsdata.abtest.core.SensorsABTestCacheManager;
+import com.sensorsdata.abtest.core.SensorsABTestTrackConfigManager;
+import com.sensorsdata.abtest.entity.AppConstants;
+import com.sensorsdata.abtest.util.CommonUtils;
 import com.sensorsdata.analytics.android.sdk.SAConfigOptions;
+import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsAnalyticsAutoTrackEventType;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
+import com.sensorsdata.analytics.android.sdk.util.JSONUtils;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -28,55 +34,13 @@ import static org.junit.Assert.assertEquals;
 @RunWith(AndroidJUnit4.class)
 public class SDKInitTest {
 
-    private static final String sMockData = "{\n" +
-            "\t\"status\": \"SUCCESS\",\n" +
-            "\t\"error_type\": \"XXX_ERROR\",\n" +
-            "\t\"error_msg\": \"xxxxxx\",\n" +
-            "\t\"results\": [{\n" +
-            "\t\t\"experiment_id\": \"0\",\n" +
-            "\t\t\"experiment_group_id\": \"123\",\n" +
-            "\t\t\"is_control_group\": false,\n" +
-            "\t\t\"is_white_list\": true,\n" +
-            "\t\t\"config\": {\n" +
-            "\t\t\t\"variables\": \"0\",\n" +
-            "\t\t\t\"type\": \"INTEGER\"\n" +
-            "\t\t}\n" +
-            "\t}, {\n" +
-            "\t\t\"experiment_id\": \"1\",\n" +
-            "\t\t\"experiment_group_id\": \"123\",\n" +
-            "\t\t\"is_control_group\": false,\n" +
-            "\t\t\"is_white_list\": true,\n" +
-            "\t\t\"config\": {\n" +
-            "\t\t\t\"variables\": \"1\",\n" +
-            "\t\t\t\"type\": \"STRING\"\n" +
-            "\t\t}\n" +
-            "\t}, {\n" +
-            "\t\t\"experiment_id\": \"2\",\n" +
-            "\t\t\"experiment_group_id\": \"123\",\n" +
-            "\t\t\"is_control_group\": false,\n" +
-            "\t\t\"is_white_list\": true,\n" +
-            "\t\t\"config\": {\n" +
-            "\t\t\t\"variables\": \"true\",\n" +
-            "\t\t\t\"type\": \"BOOLEAN\"\n" +
-            "\t\t}\n" +
-            "\t}, {\n" +
-            "\t\t\"experiment_id\": \"3\",\n" +
-            "\t\t\"experiment_group_id\": \"123\",\n" +
-            "\t\t\"is_control_group\": false,\n" +
-            "\t\t\"is_white_list\": true,\n" +
-            "\t\t\"config\": {\n" +
-            "\t\t\t\"variables\": \"{\\\"a\\\":\\\"Hello\\\",\\\"b\\\":\\\"World\\\"}\",\n" +
-            "\t\t\t\"type\": \"JSON\"\n" +
-            "\t\t}\n" +
-            "\t}]\n" +
-            "}";
-
     @Test
     public void testInit() {
+
         // normal
 
-        String value = SensorsABTest.shareInstance().fetchCacheABTest("1", "default");
-        assertEquals(value, "1");
+        String value = SensorsABTest.shareInstance().fetchCacheABTest("test_str", "default");
+        assertEquals(value, "Hello");
 
         // type exception_int
         int valueNumber = SensorsABTest.shareInstance().fetchCacheABTest("1", -22);
@@ -112,25 +76,34 @@ public class SDKInitTest {
     @Before
     public void SensorsABTestConfigOptionsNull() {
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        SAConfigOptions configOptions = new SAConfigOptions("https://abtest.sensorsdata.cn/api/v2/sab/results/project_key=123");
+        SAConfigOptions configOptions = new SAConfigOptions(TestConstants.SA_SERVER_URL);
         // 打开自动采集, 并指定追踪哪些 AutoTrack 事件
         configOptions.setAutoTrackEventType(SensorsAnalyticsAutoTrackEventType.APP_START |
-                SensorsAnalyticsAutoTrackEventType.APP_END |
-                SensorsAnalyticsAutoTrackEventType.APP_VIEW_SCREEN |
-                SensorsAnalyticsAutoTrackEventType.APP_CLICK)
+                        SensorsAnalyticsAutoTrackEventType.APP_END |
+                        SensorsAnalyticsAutoTrackEventType.APP_VIEW_SCREEN |
+                        SensorsAnalyticsAutoTrackEventType.APP_CLICK)
                 .enableTrackAppCrash()
                 .enableLog(true)
-                .enableVisualizedAutoTrack(true)
-                .enableVisualizedAutoTrackConfirmDialog(true);
+                .enableVisualizedAutoTrack(true);
         SensorsDataAPI.startWithConfigOptions(appContext, configOptions);
 
         SensorsABTest.startWithConfigOptions(appContext, null);
 
         try {
-            JSONObject jsonObject = new JSONObject(sMockData);
-            JSONArray jsonArray = jsonObject.optJSONArray("results");
-            SensorsABTestCacheManager.getInstance().getExperimentsFromMemoryCache(jsonArray.toString());
-            SensorsABTestCacheManager.getInstance().saveExperiments2DiskCache(jsonArray.toString());
+            JSONObject response = new JSONObject(TestConstants.MOCK_DATA);
+
+            JSONArray experimentArray = response.optJSONArray("results");
+            JSONArray outListArray = response.optJSONArray("out_list");
+            JSONObject object = new JSONObject();
+            if (experimentArray != null) {
+                object.put("experiments", experimentArray);
+            }
+            if (outListArray != null) {
+                object.put("outList", outListArray);
+            }
+
+            SensorsABTestCacheManager.getInstance().updateExperimentsMemoryCache(object.toString());
+            SensorsABTestCacheManager.getInstance().saveExperiments2DiskCache(object.toString());
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -162,7 +135,7 @@ public class SDKInitTest {
 //        } catch (JSONException e) {
 //            e.printStackTrace();
 //        }
-    }
+}
 
 //    @Before
 //    public void insideThread() {

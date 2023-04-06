@@ -35,6 +35,12 @@ public class Experiment {
     public boolean isControlGroup;
     public boolean isWhiteList;
     public List<Variable> variables;
+    public String experimentResultId;
+    public String experimentType;
+    public String subjectId;
+    public String subjectName;
+    public String experimentVersion;
+    public String originalJsonStr;
 
     public static class Variable {
         public String name;
@@ -155,7 +161,22 @@ public class Experiment {
                 ", experimentGroupId='" + experimentGroupId + '\'' +
                 ", isControlGroup=" + isControlGroup +
                 ", isWhiteList=" + isWhiteList +
-                ", variables=" + variables +
+                ", experimentResultId='" + experimentResultId + '\'' +
+                ", experimentType='" + experimentType + '\'' +
+                ", subjectId='" + subjectId + '\'' +
+                ", subjectName='" + subjectName + '\'' +
+                ", experimentVersion='" + experimentVersion + '\'' +
+                ", variables='" + variables +
                 '}';
     }
+
+    public enum SubjectType{
+        USER, DEVICE, CUSTOM;
+
+        @Override
+        public String toString() {
+            return name().toUpperCase();
+        }
+    }
+
 }

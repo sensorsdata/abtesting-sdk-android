@@ -29,7 +29,7 @@ import java.lang.reflect.Field;
 
 public class AppInfoUtils {
     private static final String TAG = "AppInfoUtils";
-    public static final String MIN_SA_SDK_VERSION = "4.3.6";
+    public static final String MIN_SA_SDK_VERSION = "6.4.3";
     public static final String MIN_SA_SECRET_SDK_VERSION = "6.2.0";
     /**
      * 网络超时可用版本

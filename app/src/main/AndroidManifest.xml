@@ -30,7 +30,7 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
 
-                <data android:scheme="saf740df55" />
+                <data android:scheme="sad5c38d9d" />
             </intent-filter>
 
         </activity>

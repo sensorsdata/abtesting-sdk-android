@@ -154,45 +154,74 @@ public class SensorsABTestApiRequestHelper<T> {
                     OnABTestReceivedData<?> onABTestReceivedData = item.getResultCallBack();
                     String itemParamName = item.getParamName();
                     Object itemDefaultValue = item.getDefaultValue();
-                    try {
-                        if (experimentMap == null) {
-                            SALog.i(TAG, "onSuccess response is empty and return default value: " + itemDefaultValue);
-                            doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
-                            continue;
-                        }
-                        Experiment experiment = experimentMap.get(itemParamName);
-                        if (experiment == null) {
-                            SALog.i(TAG, "onSuccess experiment is empty and return default value: " + itemDefaultValue);
-                            doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
-                            continue;
-                        }
-                        if (!experiment.checkTypeIsValid(itemParamName, itemDefaultValue)) {
-                            if (itemDefaultValue != null) {
-                                String variableType = "";
-                                Experiment.Variable variable = experiment.getVariableByParamName(itemParamName);
-                                if (variable != null) {
-                                    variableType = variable.type;
-                                }
-                                SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, itemParamName, variableType, itemDefaultValue.getClass().toString());
-                            }
-                            doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
-                            continue;
-                        }
-                        Object value = experiment.getVariableValue(itemParamName, itemDefaultValue);
-                        if (value != null) {
-                            SALog.i(TAG, "onSuccess return value: " + value);
-                            doCallbackOnMainThread(onABTestReceivedData, value);
-
-                            if (!experiment.isWhiteList) {
-                                SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, distinctId, loginId, anonymousId, customIDs);
-                            }
-                        }
-                    } catch (Exception e) {
-                        SALog.i(TAG, "onSuccess Exception and return default value: " + itemDefaultValue);
-                        doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
-                    }
+                    hitTestExperimentResult(experimentMap, onABTestReceivedData, itemParamName, itemDefaultValue);
+                    hitTestOutListResult(itemParamName);
                 }
                 mHasCallback = true;
+            }
+
+            /**
+             * 根据 paramName 获取试验，如果获取到就也触发 ABTestTrigger 事件
+             *
+             * @param paramName 试验参数
+             */
+            private void hitTestOutListResult(String paramName) {
+                Experiment experiment = SensorsABTestCacheManager.getInstance().getExperimentByParamNameFromOutList(paramName);
+                if (experiment != null) {
+                    SALog.i(TAG, "Hit out list experiment:  " + experiment);
+                    SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, distinctId, loginId, anonymousId, customIDs);
+                }
+            }
+
+            /**
+             * 根据 paramName 获取试验
+             *
+             * @param experimentMap 试验 paramName 和 Experiment 映射
+             * @param onABTestReceivedData 回调
+             * @param itemParamName paramName
+             * @param itemDefaultValue 默认值
+             */
+            private void hitTestExperimentResult(Map<String, Experiment> experimentMap,
+                                                 OnABTestReceivedData<?> onABTestReceivedData,
+                                                 String itemParamName,
+                                                 Object itemDefaultValue) {
+                try {
+                    if (experimentMap == null) {
+                        SALog.i(TAG, "onSuccess response is empty and return default value: " + itemDefaultValue);
+                        doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                        return;
+                    }
+                    Experiment experiment = experimentMap.get(itemParamName);
+                    if (experiment == null) {
+                        SALog.i(TAG, "onSuccess experiment is empty and return default value: " + itemDefaultValue);
+                        doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                        return;
+                    }
+                    if (!experiment.checkTypeIsValid(itemParamName, itemDefaultValue)) {
+                        if (itemDefaultValue != null) {
+                            String variableType = "";
+                            Experiment.Variable variable = experiment.getVariableByParamName(itemParamName);
+                            if (variable != null) {
+                                variableType = variable.type;
+                            }
+                            SABErrorDispatcher.dispatchSABException(SABErrorEnum.ASYNC_REQUEST_PARAMS_TYPE_NOT_VALID, itemParamName, variableType, itemDefaultValue.getClass().toString());
+                        }
+                        doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                        return;
+                    }
+                    Object value = experiment.getVariableValue(itemParamName, itemDefaultValue);
+                    if (value != null) {
+                        SALog.i(TAG, "onSuccess return value: " + value);
+                        doCallbackOnMainThread(onABTestReceivedData, value);
+
+                        if (!experiment.isWhiteList) {
+                            SensorsABTestTrackHelper.getInstance().trackABTestTrigger(experiment, distinctId, loginId, anonymousId, customIDs);
+                        }
+                    }
+                } catch (Exception e) {
+                    SALog.i(TAG, "onSuccess Exception and return default value: " + itemDefaultValue);
+                    doCallbackOnMainThread(onABTestReceivedData, itemDefaultValue);
+                }
             }
 
             @Override
@@ -215,6 +244,7 @@ public class SensorsABTestApiRequestHelper<T> {
             }
         });
     }
+
 
     void requestExperiments(Map<String, String> properties, String paramName, final IApiCallback<String> callBack) {
         requestExperiments(properties, paramName, null, callBack);
@@ -291,18 +321,26 @@ public class SensorsABTestApiRequestHelper<T> {
                     String status = response.optString("status");
                     if (TextUtils.equals(AppConstants.AB_TEST_SUCCESS, status)) {
                         SALog.i(TAG, String.format("获取试验成功：results：%s", JSONUtils.formatJson(response.toString())));
-                        JSONArray array = response.optJSONArray("results");
-                        JSONObject object = null;
-                        if (array != null) {
-                            object = new JSONObject();
-                            object.put("experiments", array);
+                        JSONArray experimentArray = response.optJSONArray("results");
+                        JSONArray outListArray = response.optJSONArray("out_list");
+                        JSONObject object = new JSONObject();
+                        if (experimentArray != null) {
+                            object.put("experiments", experimentArray);
                             if (TextUtils.isEmpty(mUserIdentifier)) {
                                 mUserIdentifier = CommonUtils.getCurrentUserIdentifier();
                             }
                             object.put("identifier", mUserIdentifier);
                         }
-                        hashMap = SensorsABTestCacheManager.getInstance().loadExperimentsFromCache(object != null ? object.toString() : "");
+                        if (outListArray != null) {
+                            object.put("outList", outListArray);
+                        }
+                        hashMap = SensorsABTestCacheManager.getInstance().updateExperimentsCache(object.toString());
                         SensorsABTestCacheManager.getInstance().saveFuzzyExperiments(response.optJSONArray("fuzzy_experiments"));
+                        JSONObject trackConfigObj = response.optJSONObject("track_config");
+                        if (trackConfigObj != null) {
+                            trackConfigObj.put("identifier", mUserIdentifier);
+                        }
+                        SensorsABTestTrackConfigManager.getInstance().saveTrackConfig(trackConfigObj);
                     } else if (TextUtils.equals(AppConstants.AB_TEST_FAILURE, status)) {
                         SALog.i(TAG, String.format("获取试验失败：error_type：%s，error：%s", response.optString("error_type"), response.optString("error")));
                     }

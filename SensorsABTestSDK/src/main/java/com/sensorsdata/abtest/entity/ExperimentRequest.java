@@ -21,6 +21,7 @@ import android.text.TextUtils;
 
 import com.sensorsdata.abtest.BuildConfig;
 import com.sensorsdata.abtest.core.SensorsABTestCustomIdsManager;
+import com.sensorsdata.abtest.util.CommonUtils;
 import com.sensorsdata.analytics.android.sdk.SALog;
 import com.sensorsdata.analytics.android.sdk.SensorsDataAPI;
 import com.sensorsdata.analytics.android.sdk.util.JSONUtils;
@@ -46,7 +47,7 @@ public class ExperimentRequest {
     public JSONObject createRequestBody() {
         JSONObject jsonObject = new JSONObject();
         try {
-            String loginId = SensorsDataAPI.sharedInstance().getLoginId();
+            String loginId = CommonUtils.getLoginId();
             if (!TextUtils.isEmpty(loginId)) {
                 jsonObject.put("login_id", loginId);
             }
@@ -58,9 +59,11 @@ public class ExperimentRequest {
                 jsonObject.put("custom_properties", new JSONObject(mProperties));
                 jsonObject.put("param_name", mParamName);
             }
-            JSONObject customIds = SensorsABTestCustomIdsManager.getInstance().getCustomIds();
-            if (customIds != null && customIds.length() != 0) {
-                jsonObject.put("custom_ids", customIds);
+            if (!isFromH5(mJSONObject)) {
+                JSONObject customIds = SensorsABTestCustomIdsManager.getInstance().getCustomIds();
+                if (customIds != null && customIds.length() != 0) {
+                    jsonObject.put("custom_ids", customIds);
+                }
             }
             try {
                 if (mJSONObject != null) {
@@ -82,6 +85,22 @@ public class ExperimentRequest {
             SALog.printStackTrace(e);
         }
         return jsonObject;
+    }
+
+    /**
+     * 如果是 H5 请求的 AB， 则不添加自定义主体信息
+     *
+     * @param jsonObject h5 data
+     * @return true/false
+     */
+    private boolean isFromH5(JSONObject jsonObject) {
+        if (jsonObject != null && jsonObject.has("origin_platform")) {
+            String result = jsonObject.optString("origin_platform");
+            if ("H5".equals(result)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

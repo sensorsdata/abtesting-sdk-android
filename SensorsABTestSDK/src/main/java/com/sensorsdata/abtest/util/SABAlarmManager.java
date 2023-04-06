@@ -51,6 +51,7 @@ public class SABAlarmManager implements Runnable {
 
     /**
      * 更新定时任务
+     *
      * @param interval 延迟事件单位是毫秒
      */
     public synchronized void refreshInterval(int interval) {

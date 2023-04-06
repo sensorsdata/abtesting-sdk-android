@@ -53,7 +53,7 @@ public class SchemeTest {
 
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
 
-        SAConfigOptions configOptions = new SAConfigOptions("https://abtest.sensorsdata.cn/api/v2/sab/results/project_key=123");
+        SAConfigOptions configOptions = new SAConfigOptions(TestConstants.SA_SERVER_URL);
         // 打开自动采集, 并指定追踪哪些 AutoTrack 事件
         configOptions.setAutoTrackEventType(SensorsAnalyticsAutoTrackEventType.APP_START |
                 SensorsAnalyticsAutoTrackEventType.APP_END |
@@ -61,11 +61,10 @@ public class SchemeTest {
                 SensorsAnalyticsAutoTrackEventType.APP_CLICK)
                 .enableTrackAppCrash()
                 .enableLog(true)
-                .enableVisualizedAutoTrack(true)
-                .enableVisualizedAutoTrackConfirmDialog(true);
+                .enableVisualizedAutoTrack(true);
         SensorsDataAPI.startWithConfigOptions(appContext, configOptions);
 
-        SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions("http://10.120.18.61:8212/api/v2/abtest/results?project-key=123");
+        SensorsABTestConfigOptions abTestConfigOptions = new SensorsABTestConfigOptions(TestConstants.AB_DISPATCH_SERVER_URL);
         SensorsABTest.startWithConfigOptions(appContext, abTestConfigOptions);
     }
 

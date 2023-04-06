@@ -1,7 +1,6 @@
 package com.sensorsdata.sensorsabtest;
 
 import android.content.Context;
-import android.os.Looper;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -294,7 +293,7 @@ public class ApiTest {
         try {
             JSONObject jsonObject = new JSONObject(sMockData);
             JSONArray jsonArray = jsonObject.optJSONArray("results");
-            SensorsABTestCacheManager.getInstance().getExperimentsFromMemoryCache(jsonArray.toString());
+            SensorsABTestCacheManager.getInstance().updateExperimentsMemoryCache(jsonArray.toString());
             SensorsABTestCacheManager.getInstance().saveExperiments2DiskCache(jsonArray.toString());
         } catch (JSONException e) {
             e.printStackTrace();

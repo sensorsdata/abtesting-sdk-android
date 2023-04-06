@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title> Web SDK demo</title>
+	<script src="./sensorsdata.min.js"></script>
+	<script src="./abtest.min.js"></script>
+
+	<script>
+        var sensors = window['sensorsDataAnalytic201505'];
+        sensors.init({
+            server_url: 'http://10.129.20.65:8106/sa?project=test_091',
+            //server_url: 'http://10.129.135.183:8106/sa?project=sdk_test',
+            // server_url: 'https://newsdktest.datasink.sensorsdata.cn/sa?project=gongcheng&token=5a394d2405c147ca',
+            is_track_single_page:true, // 单页面配置，默认开启，若页面中有锚点设计，需要将该配置删除，否则触发锚点会多触发 $pageview 事件
+            // use_client_time:true,
+            // send_type:'beacon',
+             app_js_bridge:true,
+            //app_js_bridge: {
+            //    white_list: ['http://10.120.221.220:8106/sa?project=default','http://10.120.111.143:8106/sa?project=default','http://10.120.73.51:8106/sa?project=default']
+            //},
+            show_log:true,
+            heatmap: {
+                //是否开启点击图，default 表示开启，自动采集 $WebClick 事件，可以设置 'not_collect' 表示关闭。
+                clickmap:'default',
+                //是否开启触达注意力图，not_collect 表示关闭，不会自动采集 $WebStay 事件，可以设置 'default' 表示开启。
+                scroll_notice_map:'default'
+            }
+        });
+
+        sensors.quick('autoTrack');
+
+        var abtest = sensors.use('SensorsABTest',{
+            url:'http://10.129.20.96:8202/api/v2/abtest/online/results?project-key=6654CD0907B729D4DAE175BA30E11143E52822A9'
+            // url:'http://10.120.77.53:8202/api/v2/abtest/online/results?project-key=985F3B7579CCBBFE389BCCC5BF39B166C61FDD04'
+        });
+
+    </script>
+
+</head>
+
+<body>
+	<p>测试</p>
+	<a href="#/miao?utm_source=gzgzgz">锚点</a>
+	<br>
+	<div id="testgz" style="display:inline-block;height:200px;width:200px;background-color:aquamarine;">
+		<a href="https://www.baidu.com">baidu</a>
+	</div>
+	<br>
+	<br>
+	<div id="testdiv" style="display:inline-block;height:100px;width:100px;background-color:aquamarine;">
+	</div>
+	<br>
+	<br>
+	<a href="javascript:;" id="123" data='test'> 点击按钮触发</a>
+	<a href="javascript:;" name='testdisplay' style="display:inline-block;width:20px;height:20px;background-color:red">
+		<i style="display:none"></i>
+	</a>
+	<br>
+	<input type="checkbox" value='test' name='gz' checked='checked' /> 测试的checkbox点击
+	<br>
+	<button type="button" id="testClick" onclick="sensors.track('sf_test',{'test':'111','proportion':'80%'})">测试点击</button>
+	<br>
+	<br>
+	<button type="button" id="btn2" name="btn2">bind</button>
+	<br>
+	<br>
+	<button type="button" id="btn3" name="btn3" >unbind</button>
+	<br>
+	<br>
+	<button type="button" id="btn4" name="btn4" >login</button>
+	<br>
+	<br>
+	<br>
+	<button type="button" id="btn5" name="AB(local_time_custom)" >logoutAB(local_time_custom)</button>
+	<br>
+	<br>
+	<br>
+	<button type="button" id="btn6" name="AB(ddd)" >btn6(ddd)</button>
+	<br>
+	<br>
+	<br>
+	<button type="button" id="btn7" name="btn7" >btn7</button>
+	<br>
+	<br>
+	<br>
+	<textarea >输入内容</textarea>
+	<br>
+	<br>
+	<ul>
+		<li>101</li>
+		<li>102</li>
+		<li>103</li>
+		<li>104</li>
+		<li>105</li>
+		<li>106</li>
+		<li>107</li>
+		<li>108</li>
+	</ul>
+	<br>
+	<br>
+	<br>
+
+</body>
+
+
+<script type="text/javascript">
+	document.getElementById("btn2").onclick = function(){
+			//sensors.bind('qq','qq123')
+			//sensors.bind('js_bind','999')
+			//sensors.bind('$identity_android_id','qq999')
+			//sensors.bind('$identity_login_id','qq888')
+		}
+</script>
+
+	<script type="text/javascript">
+	document.getElementById("btn3").onclick = function(){
+			//sensors.unbind('qq','qq123')
+			//sensors.unbind('abc','777')
+			//sensors.unbind('$identity_android_id','qq999')
+			//sensors.unbind('$identity_android_uuid','qq999')
+			//sensors.unbind('$identity_login_id','qq888')
+			//sensors.unbind('$identity_anonymous_id','qq888')
+		}
+</script>
+
+
+<script type="text/javascript">
+	document.getElementById("btn4").onclick = function(){
+			sensors.login('js_login222')
+			//sensors.login('abc')
+		}
+</script>
+
+<script type="text/javascript">
+	document.getElementById("btn5").onclick = function(){
+			//sensors.logout()
+		 console.log('start')
+		 console.log(abtest)
+		abtest.fastFetchABTest({
+            param_name:"li",
+            timeout_milliseconds:40000,
+            default_value:0,
+            value_type:"Number",
+            callback: function(result){
+                console.log('ab 的结果是',result)
+            }
+        });
+
+		}
+</script>
+
+<script type="text/javascript">
+	document.getElementById("btn6").onclick = function(){
+			//sensors.identify('js_nm777')
+			 console.log('start')
+		console.log(abtest)
+		abtest.fastFetchABTest({
+            param_name:"cus_yyy",
+            timeout_milliseconds:40000,
+            default_value:0,
+            value_type:"Number",
+            callback: function(result){
+                console.log('ab 的结果是',result)
+            }
+        });
+		}
+</script>
+
+<script type="text/javascript">
+	document.getElementById("btn7").onclick = function(){
+			//sensors.loginWithKey('js_aaa','js123')
+			//sensors.loginWithKey('abc','777')
+
+			 console.log(abtest)
+		abtest.fastFetchABTest({
+            param_name:"local_code_custom",
+            timeout_milliseconds:40000,
+            default_value:-1,
+            value_type:"Number",
+            callback: function(result){
+                console.log('ab 的结果是',result)
+            }
+        });
+
+		}
+</script>
+
+
+</html>

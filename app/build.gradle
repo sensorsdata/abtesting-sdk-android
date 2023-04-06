@@ -54,6 +54,10 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
     implementation project(path: ':SensorsABTestSDK')
     implementation 'com.tencent.tbs.tbssdk:sdk:43903'
-    implementation 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:6.3.5'
+    implementation 'com.sensorsdata.analytics.android:SensorsAnalyticsSDK:6.6.1'
 //    implementation files('libs/SensorsAnalyticsSDK-6.2.0.aar')
+}
+
+sensorsAnalytics {
+    disableCheckSDK=true
 }

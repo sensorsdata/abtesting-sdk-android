@@ -25,6 +25,7 @@ import android.text.TextUtils;
 import android.view.View;
 
 import com.sensorsdata.abtest.entity.Experiment;
+import com.sensorsdata.abtest.util.CommonUtils;
 import com.sensorsdata.abtest.util.SABAlarmManager;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.analytics.android.sdk.SALog;
@@ -53,6 +54,8 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
 
     public void init(Context context) {
         this.mContext = context;
+        //TODO 缓存加载耗时优化
+        SensorsABTestTrackConfigManager.getInstance().loadTrackConfigCache();
         SensorsABTestCacheManager.getInstance().loadExperimentsFromDiskCache();
         SensorsABTestCustomIdsManager.getInstance().loadCustomIds();
         SensorsDataAPI.sharedInstance().addSAJSListener(this);
@@ -169,7 +172,7 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
     @Override
     public void identify() {
         SALog.i(TAG, "identify");
-        if (TextUtils.isEmpty(SensorsDataAPI.sharedInstance().getLoginId())) {
+        if (TextUtils.isEmpty(CommonUtils.getLoginId())) {
             onUserInfoChanged();
         } else {
             SALog.i(TAG, "User has login, no need change!");
@@ -188,6 +191,7 @@ public class SensorsABTestHelper implements SAJSListener, SAEventListener, AppSt
     public static void onUserInfoChanged() {
         try {
             SensorsABTestCacheManager.getInstance().clearCache();
+            SensorsABTestTrackConfigManager.getInstance().clearCache();
             new SensorsABTestApiRequestHelper<>().requestExperimentsAndUpdateCache();
         } catch (Exception e) {
             SALog.printStackTrace(e);

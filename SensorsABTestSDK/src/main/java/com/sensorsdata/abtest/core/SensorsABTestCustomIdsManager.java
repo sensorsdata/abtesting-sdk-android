@@ -27,6 +27,7 @@ import com.sensorsdata.analytics.android.sdk.SALog;
 import org.json.JSONObject;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 public class SensorsABTestCustomIdsManager {
@@ -128,6 +129,25 @@ public class SensorsABTestCustomIdsManager {
                 }
             }
             return true;
+        }
+        return false;
+    }
+
+    /**
+     * 判断是否包含 subjectId
+     *
+     * @param value 目标 subjectId
+     * @return true/false
+     */
+    public boolean isContainTargetCustom(String value) {
+        if (mCustomIds == null || mCustomIds.length() == 0) {
+            return true;
+        }
+        Iterator<String> keys = mCustomIds.keys();
+        while (keys.hasNext()) {
+            if (TextUtils.equals(mCustomIds.optString(keys.next()), value)) {
+                return true;
+            }
         }
         return false;
     }

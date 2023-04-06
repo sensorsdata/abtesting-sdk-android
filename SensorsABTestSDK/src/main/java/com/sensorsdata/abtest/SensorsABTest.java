@@ -29,6 +29,7 @@ import com.sensorsdata.abtest.core.SensorsABTestHelper;
 import com.sensorsdata.abtest.entity.SABErrorEnum;
 import com.sensorsdata.abtest.store.StoreManagerFactory;
 import com.sensorsdata.abtest.util.AppInfoUtils;
+import com.sensorsdata.abtest.util.CommonUtils;
 import com.sensorsdata.abtest.util.TaskRunner;
 import com.sensorsdata.abtest.util.UrlUtil;
 import com.sensorsdata.analytics.android.sdk.SALog;
@@ -241,7 +242,7 @@ public class SensorsABTest implements ISensorsABTestApi {
             }
             SALog.i(TAG, "asyncFetchABTest request param name: " + paramName + ",default value: " + defaultValue + ",timeoutMillSeconds: " + timeoutMillSeconds);
             final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
-            final String loginId = SensorsDataAPI.sharedInstance().getLoginId();
+            final String loginId = CommonUtils.getLoginId();
             final String anonymousId = SensorsDataAPI.sharedInstance().getAnonymousId();
             final String customIds = SensorsABTestCustomIdsManager.getInstance().getCustomIdsString();
             new SensorsABTestApiRequestHelper<T>().requestExperimentByParamName(distinctId, loginId, anonymousId, customIds, paramName, defaultValue, properties, timeoutMillSeconds, callBack, mergeRequest);

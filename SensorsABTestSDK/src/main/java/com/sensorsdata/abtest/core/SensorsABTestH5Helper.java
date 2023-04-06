@@ -71,7 +71,6 @@ class SensorsABTestH5Helper implements WebViewJavascriptBridge {
                     if (timeout <= 0) {
                         timeout = SensorsABTestApiRequestHelper.DEFAULT_TIMEOUT;
                     }
-                    final String distinctId = SensorsDataAPI.sharedInstance().getDistinctId();
                     new SensorsABTestApiRequestHelper<>().setTimeoutMillSeconds(timeout).requestExperiments(null, null, data.optJSONObject("request_body"), new IApiCallback<String>() {
                         @Override
                         public void onSuccess(String s) {
@@ -87,23 +86,6 @@ class SensorsABTestH5Helper implements WebViewJavascriptBridge {
                                 object.put("data", dataObject);
                                 SALog.i(TAG, "onSuccess callJS object: " + object.toString());
                                 callJs(string2Base64(object.toString()));
-                            } catch (JSONException e) {
-                                SALog.printStackTrace(e);
-                            }
-
-                            try {
-                                JSONObject originObject = new JSONObject(s);
-                                JSONArray array = originObject.optJSONArray("results");
-                                String status = originObject.optString("status");
-                                if (TextUtils.equals(AppConstants.AB_TEST_SUCCESS, status)) {
-                                    JSONObject obj = null;
-                                    if (array != null) {
-                                        obj = new JSONObject();
-                                        obj.put("experiments", array);
-                                        obj.put("distinct_id", distinctId);
-                                    }
-                                    SensorsABTestCacheManager.getInstance().loadExperimentsFromCache(obj != null ? obj.toString() : "");
-                                }
                             } catch (JSONException e) {
                                 SALog.printStackTrace(e);
                             }

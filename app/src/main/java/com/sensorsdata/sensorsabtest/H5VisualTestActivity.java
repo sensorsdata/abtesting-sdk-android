@@ -54,7 +54,8 @@ public class H5VisualTestActivity extends Activity {
             WebView.setWebContentsDebuggingEnabled(true);
         }
 
-        mWebView.loadUrl(mItems.get(0));
+        mWebView.loadUrl("file:///android_asset/visual_h5_test/test.html");
+        //mWebView.loadUrl(mItems.get(0));
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {

@@ -34,10 +34,5 @@ Android 4.0 及以上。
 | [《数据驱动：从方法到实践》](https://item.jd.com/12322322.html) | [《Android 全埋点解决方案》](https://item.jd.com/12574672.html) | [《iOS 全埋点解决方案》](https://item.jd.com/12867068.html)
 | ------ | ------ | ------ |
 
-## 感谢
-- [mixpanel-android](https://github.com/mixpanel/mixpanel-android) 
-- [TiDB](https://github.com/pingcap/tidb) 
-- [Knight-ZXW](https://github.com/Knight-ZXW)
-
 ## License
 [License 协议](https://github.com/sensorsdata/abtesting-sdk-android/blob/main/LICENSE)

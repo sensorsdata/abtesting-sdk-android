@@ -10,24 +10,21 @@
 
 A/B Testing SDK 是一款用于 A/B 测试的 SDK。
 
+## 神策埋点 SDK 官网
+如需了解神策埋点 SDK 的更多商业授权信息，请访问[神策埋点 SDK 官网](https://jssdk.debugbox.sensorsdata.cn/)获取更多详细信息。
+
+## 联系我们
+若您有商业合作或产品集成需求，请通过下面的渠道联系我们获取专业服务与支持。
+
+| 加微信号：skycode008，或扫码添加联系人 <img src="https://github.com/sensorsdata/sa-sdk-android/blob/master/WechatIMG180.jpg" width="300" height="450" /> | 扫码关注「神策埋点 SDK」公众号 ![gzh](https://github.com/sensorsdata/sa-sdk-android/blob/master/gzh.jpeg) |
+| ------ | ------ |
+
 ## 集成文档
 
 请参考神策官网 [**A/B Testing 集成文档**](https://manual.sensorsdata.cn/abtesting/latest/android-sdk-a-b-testing-45613062.html)
 
 ## 基本要求
 Android 4.0 及以上。
-
-## 贡献
-
-* 1.  在您的 GitHub 账户下 fork sa-sdk-android 开源项目；
-* 2.  根据您的需求在本地 clone 一份 sa-sdk-android 源码；
-* 3.  您修改或者新增功能后，push 到您 fork 的远程分支；
-* 4.  创建 pull request，向 sa-sdk-android 官方开发分支提交合入请求；
-* 5.  神策 SDK 研发团队会及时 review 代码，测试通过后合入。
-
-## 规划
-
-可参考 [ROADMAP](ROADMAP.md).
 
 ## 新书推荐
 
